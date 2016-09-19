@@ -22,3 +22,10 @@ browser-sync start --server --files "*"
 ```
 
 `browser-sync start` starts BrowserSync, `--server` runs a local server using your current directory as the root and `--files '*'` tells BrowserSync the files it should watch for changes ('*' denotes watching all files). 
+
+### Installing new NPM packages
+
+When installing new packages add `--save` to include it in package.json, for example for jquery (already included)
+```
+npm install jquery --save
+```
