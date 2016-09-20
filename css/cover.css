@@ -50,7 +50,6 @@ body {
 }
 .cover-container {
   margin-right: auto;
-  margin-left: auto;
 }
 
 /* Padding for spacing */
@@ -109,10 +108,7 @@ body {
  * Cover
  */
 
-.cover {
-  padding: 0 20px;
-}
-.cover .btn-lg {
+.btn-lg {
   padding: 10px 20px;
   font-weight: bold;
 }
@@ -120,9 +116,13 @@ body {
 /*
  * Drawing canvas
  */
+ 
  .drawing-canvas {
-   background-color: #fff;   
+   background-color: transparent;   
  }
+ .canvas-wrapper {
+  width: 100%;
+}
 
 /*
  * Footer
