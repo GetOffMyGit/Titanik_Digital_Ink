@@ -6,6 +6,10 @@
         <link rel="stylesheet" type="text/css" href="./node_modules/bootstrap/dist/css/bootstrap.min.css">
         <!--Custom CSS-->
         <link rel="stylesheet" type="text/css" href="./css/cover.css">
+        <link rel="stylesheet" type="text/css" href="./css/style.css">
+        <!--Highlight JS-->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/default.min.css">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/highlight.min.js"></script>
     </head>
 <body>
 
@@ -30,6 +34,23 @@
 
           <div class="canvas-wrapper">
             <canvas class="drawing-canvas" id="mainCanvas" width="1024" height="800"></canvas>
+            <div class="code-wrapper">
+                function $initHighlight(block, cls) {
+                  try {
+                    if (cls.search(/\bno\-highlight\b/) != -1)
+                      return process(block, true, 0x0F) +
+                        ` class="${cls}"`;
+                      } catch (e) {
+                        /* handle exception */
+                      }
+                      for (var i = 0 / 2; i < classes.length; i++) {
+                        if (checkCondition(classes[i]) === undefined)
+                          console.log('undefined');
+                        }
+                      }
+                      
+                      export  $initHighlight;
+          </div>
           </div>
 
           <div class="mastfoot">
@@ -51,5 +72,6 @@
         <!--Custom Scripts-->
         <script src="./js/drawing_pad.js"></script>
         <script src="./js/script.js"></script>
+        <script src="./js/highlightScript.js"></script>
     </body>
 </html>
