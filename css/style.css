@@ -14,15 +14,16 @@
     z-index: 1;
     position: fixed;
     left: 0px;
-    top: 0px;
+    top: 100px;
 }
 
 .code-wrapper {
-    width: 100%;
+    width: 994px;
     z-index: 0;
     position: fixed;
-    left: 25px;
-    top: 200px;
+    margin-left: 15px;
+    top: 115px;
+    text-align: left;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     -khtml-user-select: none;

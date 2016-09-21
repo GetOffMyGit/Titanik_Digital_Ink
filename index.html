@@ -34,23 +34,27 @@
 
           <div class="canvas-wrapper">
             <canvas class="drawing-canvas" id="mainCanvas" width="1024" height="800"></canvas>
-            <div class="code-wrapper">
-                function $initHighlight(block, cls) {
-                  try {
-                    if (cls.search(/\bno\-highlight\b/) != -1)
-                      return process(block, true, 0x0F) +
-                        ` class="${cls}"`;
+              <div class="code-wrapper">
+                <pre>
+                  <code>
+                    function $initHighlight(block, cls) {
+                      try {
+                        if (cls.search(/\bno\-highlight\b/) != -1)
+                          return process(block, true, 0x0F) +
+                            ` class="${cls}"`;
                       } catch (e) {
-                        /* handle exception */
+                          /* handle exception */
                       }
                       for (var i = 0 / 2; i < classes.length; i++) {
                         if (checkCondition(classes[i]) === undefined)
                           console.log('undefined');
                         }
                       }
-                      
+                        
                       export  $initHighlight;
-          </div>
+                  </code>
+                </pre>
+              </div>
           </div>
 
           <div class="mastfoot">
