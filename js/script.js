@@ -28,12 +28,21 @@ $(document).ready(function() {
     });
 
     loadButton.addEventListener("click", function () {
-        // load from external chosen file
-        
-        $.getJSON("inks.json", function(json) {
-            console.log(json); 
+        //TODO: load from external chosen file
 
-            // do stuff to make the ink display
+        // no input while loading ink
+        drawingPad.off();
+        $.getJSON("inks.json", function(json) {
+            // iterate through all the lines
+            for(var i = 0; i < json.length; i++) {
+                var line = json[i];
+
+                // draw the line given by points
+                drawingPad.drawFromJson(line);
+            }
+
+            // allow ink after input done
+            drawingPad.on();
         });
     });
 });

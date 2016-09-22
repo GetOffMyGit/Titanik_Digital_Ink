@@ -163,7 +163,7 @@ var DrawingPad = (function (document) {
 
         // save to local storage
         this.inkLines.push(this.allpoints);
-        
+
         localStorage.setItem('line', JSON.stringify(this.inkLines));
 
         if (!canDrawCurve && point) {
@@ -342,6 +342,29 @@ var DrawingPad = (function (document) {
 
     DrawingPad.prototype.getInkLines = function () {
         return this.inkLines;
+    };
+
+    DrawingPad.prototype.drawFromJson = function (jsonLine) {
+        // reset line property
+        this._reset();
+        
+        var line = [];
+
+        // iterate through each point
+        for(var i = 0; i < jsonLine.length; i++) {
+                var jsonPoint = jsonLine[i];
+
+                // create javaObject point from json values
+                var point = new Point(jsonPoint.x, jsonPoint.y, jsonPoint.time);
+
+                // add point to the drawing_pad - same logic as when mouse down
+                this._addPoint(point);
+                
+                line.push(point);
+        }
+
+        // add to existing lines
+        this.inkLines.push(line)
     };
 
     var Point = function (x, y, time) {
