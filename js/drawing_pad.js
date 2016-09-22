@@ -49,6 +49,7 @@ var DrawingPad = (function (document) {
         this.backgroundColor = opts.backgroundColor || "rgba(0,0,0,0)";
         this.onEnd = opts.onEnd;
         this.onBegin = opts.onBegin;
+        this.inkLines = [];
 
         this._canvas = canvas;
         this._ctx = canvas.getContext("2d");
@@ -160,6 +161,11 @@ var DrawingPad = (function (document) {
         var canDrawCurve = this.points.length > 2,
             point = this.points[0];
 
+        // save to local storage
+        this.inkLines.push(this.allpoints);
+        
+        localStorage.setItem('line', JSON.stringify(this.inkLines));
+
         if (!canDrawCurve && point) {
             this._strokeDraw(point);
         }
@@ -207,6 +213,7 @@ var DrawingPad = (function (document) {
 
     DrawingPad.prototype._reset = function () {
         this.points = [];
+        this.allpoints = [];
         this._lastVelocity = 0;
         this._lastWidth = (this.minWidth + this.maxWidth) / 2;
         this._isEmpty = true;
@@ -227,6 +234,7 @@ var DrawingPad = (function (document) {
             curve, tmp;
 
         points.push(point);
+        this.allpoints.push(point);
 
         if (points.length > 2) {
             // To reduce the initial lag make it work with 3 points
@@ -332,6 +340,9 @@ var DrawingPad = (function (document) {
         return Math.max(this.maxWidth / (velocity + 1), this.minWidth);
     };
 
+    DrawingPad.prototype.getInkLines = function () {
+        return this.inkLines;
+    };
 
     var Point = function (x, y, time) {
         this.x = x;

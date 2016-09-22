@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Moodify</title>
+        <title>Titanik</title>
         <!--Boostrap's CSS-->
         <link rel="stylesheet" type="text/css" href="./node_modules/bootstrap/dist/css/bootstrap.min.css">
         <!--Custom CSS-->
@@ -25,8 +25,9 @@
               <nav>
                 <ul class="nav masthead-nav">
                   <li class="active"><a href="#">Home</a></li>
-                  <li><a href="#">Features</a></li>
-                  <li><a href="#">Contact</a></li>
+                  <li><button id = "saveButton" class="btn btn-info">Save Ink as JSON</button> </li>
+                  <li><button id = "loadButton" class="btn btn-primary">Load Ink from JSON</button> </li>
+                  <li><div id="content"><a id="download">Download</a></div>
                 </ul>
               </nav>
             </div>

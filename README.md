@@ -18,7 +18,7 @@ run it in any directory, and `browser-sync` is the name of the package.
 
 To run BrowserSync run the following command in the project directory:
 ```
-browser-sync start --server --files "*"
+browser-sync start --server --files "***/*"
 ```
 
 `browser-sync start` starts BrowserSync, `--server` runs a local server using your current directory as the root and `--files '*'` tells BrowserSync the files it should watch for changes ('*' denotes watching all files). 
