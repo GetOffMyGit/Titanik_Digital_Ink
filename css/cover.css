@@ -48,9 +48,6 @@ body {
   display: table-cell;
   vertical-align: top;
 }
-.cover-container {
-  margin-right: auto;
-}
 
 /* Padding for spacing */
 .inner {
@@ -151,8 +148,7 @@ body {
 
 @media (min-width: 992px) {
   .masthead,
-  .mastfoot,
-  .cover-container {
+  .mastfoot {
     width: 700px;
   }
 }

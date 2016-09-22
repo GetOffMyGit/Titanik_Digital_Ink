@@ -7,21 +7,20 @@
  }
  .canvas-wrapper {
   width: 100%;
-  position: fixed;
+  height: 800px;
+  overflow-y: scroll;
+  padding-top: 10px;
 }
 
 #mainCanvas {
     z-index: 1;
     position: fixed;
     left: 0px;
-    top: 100px;
+    border-right: 1px solid black;
 }
 
 .code-wrapper {
-    width: 994px;
     z-index: 0;
-    position: fixed;
-    margin-left: 15px;
     top: 115px;
     text-align: left;
     -webkit-touch-callout: none;
