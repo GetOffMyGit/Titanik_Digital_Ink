@@ -50,6 +50,7 @@ var DrawingPad = (function (document) {
         this.onEnd = opts.onEnd;
         this.onBegin = opts.onBegin;
         this.inkLines = [];
+		this.undoStack = [];
 
         this._canvas = canvas;
         this._ctx = canvas.getContext("2d");
@@ -343,6 +344,20 @@ var DrawingPad = (function (document) {
     DrawingPad.prototype.getInkLines = function () {
         return this.inkLines;
     };
+	
+	DrawingPad.prototype.undo = function () {
+		this.undoStack.push(this.inkLines.pop());
+		this.clear();
+			
+		for(var i = 0; i < inkLines.length; i++) {
+			var line[] = this.getInkLines()[i];
+			this._reset();
+			for(var j = 0; j < line.length; j++) {
+				var point = line[j];
+				this._addPoint(point);
+			}
+		}
+	};
 
     DrawingPad.prototype.drawFromJson = function (jsonLine) {
         // reset line property
