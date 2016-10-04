@@ -355,7 +355,7 @@ var DrawingPad = (function (document) {
 	};
 	
 	DrawingPad.prototype.redo = function () {
-		if (this.inkLines.length != 0) {
+		if (this.undoStack.length != 0) {
 			this.inkLines.push(this.undoStack.pop());
 			this.clear();
 			
