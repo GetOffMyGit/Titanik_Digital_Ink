@@ -8,12 +8,22 @@ $(document).ready(function() {
     });
 
     drawingPad.on();
-
+	
+	var undoButton = $("#undoButton")[0];
     var saveButton = $("#saveButton")[0];
     var loadButton = $("#loadButton")[0];
     var downloadRef = $("#download")[0];
 
     $("#download").hide();
+	
+	undoButton.addEventListener("click", function () {
+		drawingPad.undo();
+	});
+	
+	redoButton.addEventListener("click", function () {
+		drawingPad.redo();
+	});
+	
     saveButton.addEventListener("click", function () {
         var inkLines = drawingPad.getInkLines();
 
