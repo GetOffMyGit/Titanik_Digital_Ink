@@ -35,6 +35,7 @@ $(document).ready(function() {
 		closeOnConfirm: false
 	},function(){
 		drawingPad.clear();
+		drawingPad.clearStack();
 		swal("Cleared!", "Your drawing pad has been reset.", "success");
 		});		
 	});
