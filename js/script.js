@@ -24,6 +24,21 @@ $(document).ready(function() {
 		drawingPad.redo();
 	});
 	
+	clearButton.addEventListener("click", function () {
+	swal({
+		title: "Are you sure?",
+		text: "You will not be able to recover any drawings!",
+		type: "warning",
+		showCancelButton: true,
+		confirmButtonColor: "#DD6B55",
+		confirmButtonText: "Yes, clear it!",
+		closeOnConfirm: false
+	},function(){
+		drawingPad.clear();
+		swal("Cleared!", "Your drawing pad has been reset.", "success");
+		});		
+	});
+	
     saveButton.addEventListener("click", function () {
         var inkLines = drawingPad.getInkLines();
 
