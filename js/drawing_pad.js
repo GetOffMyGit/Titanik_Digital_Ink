@@ -82,7 +82,9 @@ var DrawingPad = (function (document) {
             if (event.targetTouches.length == 1) {
                 var touch = event.changedTouches[0];
                 self._strokeBegin(touch);
-             }
+            //}	else if (event.targetTouches.length == 2) {
+			//	swal("Two fingers detected!")
+			 }
         };
 
         this._handleTouchMove = function (event) {
