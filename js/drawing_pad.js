@@ -114,6 +114,11 @@ var DrawingPad = (function (document) {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         this._reset();
     };
+	
+	DrawingPad.prototype.clearStack = function () {
+		this.undoStack = [];
+		this.inkLines = [];
+	}
 
     DrawingPad.prototype.toDataURL = function (imageType, quality) {
         var canvas = this._canvas;
