@@ -346,19 +346,35 @@ var DrawingPad = (function (document) {
     };
 	
 	DrawingPad.prototype.undo = function () {
-		this.undoStack.push(this.inkLines.pop());
-		this.clear();
+		if (this.inkLines.length != 0) {
+			this.undoStack.push(this.inkLines.pop());
+			this.clear();
 			
-		for(var i = 0; i < inkLines.length; i++) {
-			var line[] = this.getInkLines()[i];
+			this.drawLines();
+		}
+	};
+	
+	DrawingPad.prototype.redo = function () {
+		if (this.inkLines.length != 0) {
+			this.inkLines.push(this.undoStack.pop());
+			this.clear();
+			
+			this.drawLines();
+		}
+	};
+
+	DrawingPad.prototype.drawLines = function () {
+		for(var i = 0; i < this.inkLines.length; i++) {
+			var line = this.getInkLines()[i];
 			this._reset();
 			for(var j = 0; j < line.length; j++) {
 				var point = line[j];
 				this._addPoint(point);
 			}
 		}
-	};
-
+		
+	}
+	
     DrawingPad.prototype.drawFromJson = function (jsonLine) {
         // reset line property
         this._reset();

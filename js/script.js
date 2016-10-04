@@ -18,7 +18,11 @@ $(document).ready(function() {
 	
 	undoButton.addEventListener("click", function () {
 		drawingPad.undo();
-	};
+	});
+	
+	redoButton.addEventListener("click", function () {
+		drawingPad.redo();
+	});
 	
     saveButton.addEventListener("click", function () {
         var inkLines = drawingPad.getInkLines();
