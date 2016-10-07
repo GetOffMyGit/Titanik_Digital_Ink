@@ -35,6 +35,13 @@
 var DrawingPad = (function (document) {
     "use strict";
 
+    var drawModes = {
+        PEN: 0,
+        CIRCLE: 1,
+        SQUARE: 2,
+        TRIANGLE: 3
+    };
+
     var DrawingPad = function (canvas, options) {
         var self = this,
             opts = options || {};
@@ -51,6 +58,8 @@ var DrawingPad = (function (document) {
         this.onBegin = opts.onBegin;
         this.inkLines = [];
 		this.undoStack = [];
+        this.shapes = [];
+        this.drawMode = drawModes.PEN;
 
         this._canvas = canvas;
         this._ctx = canvas.getContext("2d");
@@ -61,20 +70,32 @@ var DrawingPad = (function (document) {
         this._handleMouseDown = function (event) {
             if (event.which === 1) {
                 self._mouseButtonDown = true;
-                self._strokeBegin(event);
+                self._createCircle(event);
+                //self._strokeBegin(event);
+                var mode = 0;
+                if (mode == 0) {
+                    //self._strokeBegin(event);
+                   
+                }
+                //     case drawModes.CIRCLE:
+                //         self._createCircle(event);
+                //         break;
+                //     default:
+                //        //
+                // }
             }
         };
 
         this._handleMouseMove = function (event) {
             if (self._mouseButtonDown) {
-                self._strokeUpdate(event);
+                //self._strokeUpdate(event);
             }
         };
 
         this._handleMouseUp = function (event) {
             if (event.which === 1 && self._mouseButtonDown) {
-                self._mouseButtonDown = false;
-                self._strokeEnd(event);
+               // self._mouseButtonDown = false;
+                //self._strokeEnd(event);
             }
         };
 
@@ -405,6 +426,10 @@ var DrawingPad = (function (document) {
         this.inkLines.push(line)
     };
 
+    DrawingPad.prototype.setMode = function (drawModeNum) {
+        this.drawMode = drawModeNum;
+    };
+
     var Point = function (x, y, time) {
         this.x = x;
         this.y = y;
@@ -452,6 +477,53 @@ var DrawingPad = (function (document) {
                + 3.0 *  c1    * (1.0 - t) * (1.0 - t)  * t
                + 3.0 *  c2    * (1.0 - t) * t          * t
                +        end   * t         * t          * t;
+    };
+
+    var Square = function (x, y, w, h, colour) {
+        // This is a very simple and unsafe constructor.
+        // All we're doing is checking if the values exist.
+        // "x || 0" just means "if there is a value for x, use that. Otherwise use 0."
+        this.x = x || 0;
+        this.y = y || 0;
+        this.w = w || 1;
+        this.h = h || 1;
+        this.colour = colour || '#AAAAAA';
+    }
+
+    var Circle = function (x, y, radius, colour) {
+        // This is a very simple and unsafe constructor.
+        // All we're doing is checking if the values exist.
+        // "x || 0" just means "if there is a value for x, use that. Otherwise use 0."
+        this.x = x || 0;
+        this.y = y || 0;
+        this.radius = radius || MIN_CIRCLE_RADIUS;
+        this.colour = colour || '#AAAAAA';
+    }
+
+
+    DrawingPad.prototype._createCircle = function (e) {
+        var intColor,
+            hexColor,
+            color,
+            radius = 20;
+
+        var centerPoint = this._createPoint(e);
+
+        var circle = new Circle (centerPoint.x, centerPoint.y, radius, color);
+        this.shapes.push(circle);
+
+        console.log(circle);
+        this._drawCircle(circle.x, circle.y, circle.radius, circle.colour);
+
+    };
+
+    //https://github.com/ArthurClemens/Javascript-Undo-Manager/blob/master/demo/js/circledrawer.js
+     DrawingPad.prototype._drawCircle = function(x, y, radius, colour) {
+        var ctx = this._ctx;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2, true);
+        ctx.closePath();
+        ctx.fill();
     };
 
     return DrawingPad;
