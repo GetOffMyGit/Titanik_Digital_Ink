@@ -111,6 +111,8 @@ var DrawingPad = (function (document) {
                 // if they are drawing after a single tap, kill the timeout callback so another stroke is not drawn
                 clearTimeout(this.touchTimer);
                 this.touchTimer = null;
+                // reset drawing pad variables so newly drawn line is NOT continued from previously drawn line
+                self._reset();
             }
             var touch = event.targetTouches[0];
             self._strokeUpdate(touch);
