@@ -171,6 +171,7 @@ var DrawingPad = (function (document) {
 	DrawingPad.prototype.clearStack = function () {
 		this.undoStack = [];
 		this.inkLines = [];
+		this.listOfShapes = [];
 	}
 
     DrawingPad.prototype.toDataURL = function (imageType, quality) {
