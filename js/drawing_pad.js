@@ -51,6 +51,10 @@ var DrawingPad = (function (document) {
         this.onBegin = opts.onBegin;
         this.inkLines = [];
 		this.undoStack = [];
+        // holds the lines currently selected by the user
+        this.selectedLines = [];
+        // used to determine if double tap or single tap
+        this.touchTimer = null;
 
         this._canvas = canvas;
         this._ctx = canvas.getContext("2d");
@@ -79,9 +83,21 @@ var DrawingPad = (function (document) {
         };
 
         this._handleTouchStart = function (event) {
+            // if single finger used in touch
             if (event.targetTouches.length == 1) {
-                var touch = event.changedTouches[0];
-                self._strokeBegin(touch);
+                    var context = this;
+                    // if user does not tap again in timeout time limit then it is a single tap
+                    if (this.touchTimer == null) {
+                        this.touchTimer = setTimeout(function () {
+                            context.touchTimer = null;
+                            var touch = event.changedTouches[0];
+                            self._strokeBegin(touch);
+                        }, 500)
+                    // otherwise it is a double tap
+                    } else {
+                        clearTimeout(context.touchTimer);
+                        context.touchTimer = null;
+                    }                
             //}	else if (event.targetTouches.length == 2) {
 			//	swal("Two fingers detected!")
 			 }
@@ -90,7 +106,12 @@ var DrawingPad = (function (document) {
         this._handleTouchMove = function (event) {
             // Prevent scrolling.
             event.preventDefault();
-
+            // if user is dragging their finger, check if they are drawing (single tap)
+            if (this.touchTimer != null) {
+                // if they are drawing after a single tap, kill the timeout callback so another stroke is not drawn
+                clearTimeout(this.touchTimer);
+                this.touchTimer = null;
+            }
             var touch = event.targetTouches[0];
             self._strokeUpdate(touch);
         };
