@@ -58,7 +58,7 @@ var DrawingPad = (function (document) {
         this.onBegin = opts.onBegin;
         this.inkLines = [];
 		this.undoStack = [];
-        this.shapes = [];
+        this.listOfShapes = [];
         this.drawMode = drawModes.PEN;
 
         this._canvas = canvas;
@@ -190,7 +190,8 @@ var DrawingPad = (function (document) {
             point = this.points[0];
 
         // save to local storage
-        this.inkLines.push(this.allpoints);
+        this.inkLines.push(this.inkLine);
+        this.listOfShapes.push(this.inkLine);
 
         localStorage.setItem('line', JSON.stringify(this.inkLines));
 
@@ -241,11 +242,11 @@ var DrawingPad = (function (document) {
 
     DrawingPad.prototype._reset = function () {
         this.points = [];
-        this.allpoints = [];
         this._lastVelocity = 0;
         this._lastWidth = (this.minWidth + this.maxWidth) / 2;
         this._isEmpty = true;
         this._ctx.fillStyle = this.penColor;
+        this.inkLine = new InkLine(this.penColor);
     };
 
     DrawingPad.prototype._createPoint = function (event) {
@@ -262,7 +263,7 @@ var DrawingPad = (function (document) {
             curve, tmp;
 
         points.push(point);
-        this.allpoints.push(point);
+        this.inkLine._addPointToLine(point);
 
         if (points.length > 2) {
             // To reduce the initial lag make it work with 3 points
@@ -373,56 +374,53 @@ var DrawingPad = (function (document) {
     };
 	
 	DrawingPad.prototype.undo = function () {
-		if (this.inkLines.length != 0) {
-			this.undoStack.push(this.inkLines.pop());
+		if (this.listOfShapes.length != 0) {
+            console.log(this.listOfShapes);
+			this.undoStack.push(this.listOfShapes.pop());
 			this.clear();
 			
-			this.drawLines();
+			this.drawShapes();
 		}
 	};
 	
 	DrawingPad.prototype.redo = function () {
 		if (this.undoStack.length != 0) {
-			this.inkLines.push(this.undoStack.pop());
+			this.listOfShapes.push(this.undoStack.pop());
 			this.clear();
 			
-			this.drawLines();
+			this.drawShapes();
 		}
 	};
 
-	DrawingPad.prototype.drawLines = function () {
-		for(var i = 0; i < this.inkLines.length; i++) {
-			var line = this.getInkLines()[i];
-			this._reset();
-			for(var j = 0; j < line.length; j++) {
-				var point = line[j];
-				this._addPoint(point);
-			}
+	DrawingPad.prototype.drawShapes = function () {
+		for(var i = 0; i < this.listOfShapes.length; i++) {
+			var shape = this.listOfShapes[i];
+            shape._draw(this._ctx, this);
 		}
 		
 	}
 	
-    DrawingPad.prototype.drawFromJson = function (jsonLine) {
+    DrawingPad.prototype.drawFromJson = function (jsonShape) {
         // reset line property
         this._reset();
         
-        var line = [];
+        var line = new InkLine('green');
 
         // iterate through each point
-        for(var i = 0; i < jsonLine.length; i++) {
-                var jsonPoint = jsonLine[i];
+        for(var i = 0; i < jsonShape.length; i++) {
+                var jsonPoint = jsonShape[i];
 
                 // create javaObject point from json values
                 var point = new Point(jsonPoint.x, jsonPoint.y, jsonPoint.time);
-
-                // add point to the drawing_pad - same logic as when mouse down
-                this._addPoint(point);
                 
-                line.push(point);
+                line._addPointToLine(point);
         }
 
+        // redraw line
+        line._draw(this._ctx, this);
+
         // add to existing lines
-        this.inkLines.push(line)
+        this.listOfShapes.push(line)
     };
 
     DrawingPad.prototype.setMode = function (drawModeNum) {
@@ -478,15 +476,56 @@ var DrawingPad = (function (document) {
                +        end   * t         * t          * t;
     };
 
-    var Square = function (x, y, w, h, colour) {
+    class Shape {
+        constructor(colour) {
+            this.colour = colour || '#AAAAAA';
+        }
+
+        _draw(ctx, drawingPad) {
+            drawingPad._reset();
+            ctx.fillStyle = this.colour;
+        }
+
+    }
+
+    class InkLine extends Shape {
+        constructor(colour) {
+            super(colour);
+            this.points = [];
+
+        }
+
+        _draw(ctx, drawingPad) {
+            super._draw(ctx, drawingPad);
+            			
+			for(var j = 0; j < this.points.length; j++) {
+				var point = this.points[j];
+				drawingPad._addPoint(point);
+			}
+        }
+
+        _addPointToLine(point) {
+            this.points.push(point);
+        }
+
+    }
+
+    class Square extends Shape {
         // This is a very simple and unsafe constructor.
         // All we're doing is checking if the values exist.
         // "x || 0" just means "if there is a value for x, use that. Otherwise use 0."
-        this.x = x || 0;
-        this.y = y || 0;
-        this.w = w || 1;
-        this.h = h || 1;
-        this.colour = colour || '#AAAAAA';
+        constructor (x, y, w, h, colour) {
+            super(colour);
+            this.x = x || 0;
+            this.y = y || 0;
+            this.w = w || 1;
+            this.h = h || 1;
+        }
+
+        _draw(ctx, drawingPad) {
+            super._draw(ctx, drawingPad);
+            ctx.fillRect(this.x, this.y, this.w, this.h);
+        }
     }
 
     DrawingPad.prototype._createSquare = function (e) {
@@ -498,22 +537,11 @@ var DrawingPad = (function (document) {
         var centerPoint = this._createPoint(e);
 
         var square = new Square (centerPoint.x - width/2, centerPoint.y - height/2, width, height, color);
-        this.shapes.push(square);
+        this.listOfShapes.push(square);
 
-        square._draw(this._ctx);
+        square._draw(this._ctx, this);
     };
 
-    Square.prototype._draw = function(ctx) {
-        ctx.fillStyle = this.colour;
-        ctx.fillRect(this.x, this.y, this.w, this.h);
-    };
-
-    var Circle = function (x, y, radius, colour) {
-        this.x = x || 0;
-        this.y = y || 0;
-        this.radius = radius || MIN_CIRCLE_RADIUS;
-        this.colour = colour || '#AAAAAA';
-    }
 
     DrawingPad.prototype._createCircle = function (e) {
         var color,
@@ -522,26 +550,59 @@ var DrawingPad = (function (document) {
         var centerPoint = this._createPoint(e);
 
         var circle = new Circle (centerPoint.x, centerPoint.y, radius, color);
-        this.shapes.push(circle);
+        this.listOfShapes.push(circle);
 
-        circle._draw(this._ctx);
+        circle._draw(this._ctx, this);
     };
 
-    //https://github.com/ArthurClemens/Javascript-Undo-Manager/blob/master/demo/js/circledrawer.js
-    Circle.prototype._draw = function(ctx) {
-        ctx.fillStyle = this.colour;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
-        ctx.closePath();
-        ctx.fill();
-    };
+    class Circle extends Shape {
+        // This is a very simple and unsafe constructor.
+        // All we're doing is checking if the values exist.
+        // "x || 0" just means "if there is a value for x, use that. Otherwise use 0."
+        constructor (x, y, radius, colour) {
+            super(colour);
+            this.x = x || 0;
+            this.y = y || 0;
+            this.radius = radius || MIN_CIRCLE_RADIUS;
+        }
 
-    var Triangle = function (x, y, w, h, colour) {
-        this.x = x || 0;
-        this.y = y || 0;
-        this.w = w || 1;
-        this.h = h || 1;
-        this.colour = colour || '#AAAAAA';
+        _draw(ctx, drawingPad) {
+            super._draw(ctx, drawingPad);
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
+            ctx.closePath();
+            ctx.fill();
+        }
+    }
+
+    class Triangle extends Shape {
+        // This is a very simple and unsafe constructor.
+        // All we're doing is checking if the values exist.
+        // "x || 0" just means "if there is a value for x, use that. Otherwise use 0."
+        constructor (x, y, w, h, colour) {
+            super(colour);
+            this.x = x || 0;
+            this.y = y || 0;
+            this.w = w || 1;
+            this.h = h || 1;
+        }
+
+        _draw(ctx, drawingPad) {
+            super._draw(ctx, drawingPad);
+
+            ctx.beginPath();
+            // triangle created in the center of mouse
+            ctx.moveTo(this.x + (this.w/2), this.y + (this.h/2));
+            ctx.lineTo(this.x, this.y - (this.h/2));
+            ctx.lineTo(this.x - (this.w/2),  this.y + (this.h/2));
+
+            // triangle created at right corner
+            // ctx.moveTo(this.x, this.y);
+            // ctx.lineTo(this.x - (this.w/2), this.y - (this.h));
+            // ctx.lineTo(this.x - this.w, this.y);
+            ctx.closePath();
+            ctx.fill();
+        }
     }
 
     DrawingPad.prototype._createTriangle = function (e) {
@@ -552,26 +613,9 @@ var DrawingPad = (function (document) {
 
         var centerPoint = this._createPoint(e);
         var triangle = new Triangle (centerPoint.x, centerPoint.y, width, height, color);
-        this.shapes.push(triangle);
+        this.listOfShapes.push(triangle);
 
-        triangle._draw(this._ctx);
-    };
-
-    Triangle.prototype._draw = function(ctx) {
-        ctx.fillStyle = this.colour;
-
-        ctx.beginPath();
-        // triangle created in the center of mouse
-        ctx.moveTo(this.x + (this.w/2), this.y + (this.h/2));
-        ctx.lineTo(this.x, this.y - (this.h/2));
-        ctx.lineTo(this.x - (this.w/2),  this.y + (this.h/2));
-
-        // triangle created at right corner
-        // ctx.moveTo(this.x, this.y);
-        // ctx.lineTo(this.x - (this.w/2), this.y - (this.h));
-        // ctx.lineTo(this.x - this.w, this.y);
-        ctx.closePath();
-        ctx.fill();
+        triangle._draw(this._ctx, this);
     };
 
     DrawingPad.prototype._startShapeOrLine = function(event) {
