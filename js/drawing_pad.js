@@ -101,7 +101,6 @@ var DrawingPad = (function (document) {
         };
 
         this._handleTouchStart = function (event) {
-             var touch = event.changedTouches[0];
              
             // if single finger used in touch
             if (event.targetTouches.length == 1) {
@@ -523,7 +522,6 @@ var DrawingPad = (function (document) {
      * Draw a shape based on its json values passed in
      */
 	DrawingPad.prototype.drawFromJson = function (jsonShape) {
-        // reset shape property
         this._reset();
         
         var shape;
