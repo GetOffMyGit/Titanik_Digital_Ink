@@ -45,7 +45,7 @@ $(document).ready(function() {
 	});
 	
     saveButton.addEventListener("click", function () {
-        var inkLines = drawingPad.getInkLines();
+        var inkLines = drawingPad.getListOfShapes();
 
         var json = JSON.stringify(inkLines);
         var blob = new Blob([json], {type: "application/json"});

@@ -35,7 +35,7 @@
 var DrawingPad = (function (document) {
     "use strict";
 
-    var drawModes = {
+    const drawModes = {
         PEN: 0,
         CIRCLE: 1,
         SQUARE: 2,
@@ -369,13 +369,12 @@ var DrawingPad = (function (document) {
         return Math.max(this.maxWidth / (velocity + 1), this.minWidth);
     };
 
-    DrawingPad.prototype.getInkLines = function () {
-        return this.inkLines;
+    DrawingPad.prototype.getListOfShapes = function () {
+        return this.listOfShapes;
     };
 	
 	DrawingPad.prototype.undo = function () {
 		if (this.listOfShapes.length != 0) {
-            console.log(this.listOfShapes);
 			this.undoStack.push(this.listOfShapes.pop());
 			this.clear();
 			
@@ -401,26 +400,40 @@ var DrawingPad = (function (document) {
 	}
 	
     DrawingPad.prototype.drawFromJson = function (jsonShape) {
-        // reset line property
+        // reset shape property
         this._reset();
         
-        var line = new InkLine('green');
+        var shape;
 
-        // iterate through each point
-        for(var i = 0; i < jsonShape.length; i++) {
-                var jsonPoint = jsonShape[i];
+        switch (jsonShape.type) {
+            case ShapeType.INKLINE:
+                shape = new InkLine('green');
+                // iterate through each point
+                for(var i = 0; i < jsonShape.points.length; i++) {
+                        var jsonPoint = jsonShape.points[i];
 
-                // create javaObject point from json values
-                var point = new Point(jsonPoint.x, jsonPoint.y, jsonPoint.time);
-                
-                line._addPointToLine(point);
+                        // create javaObject point from json values
+                        var point = new Point(jsonPoint.x, jsonPoint.y, jsonPoint.time);
+                        
+                        shape._addPointToLine(point);
+                }
+                break;
+            case ShapeType.SQUARE:
+                shape = new Square (jsonShape.x, jsonShape.y, jsonShape.w, jsonShape.h, jsonShape.colour);
+                break;
+            case ShapeType.CIRCLE:
+                shape = new Circle (jsonShape.x, jsonShape.y, jsonShape.radius, jsonShape.colour);
+                break;
+            case ShapeType.TRIANGLE:
+                shape = new Triangle (jsonShape.x, jsonShape.y, jsonShape.w, jsonShape.h, jsonShape.colour);
+                break;
         }
 
-        // redraw line
-        line._draw(this._ctx, this);
+        // redraw shape
+        shape._draw(this._ctx, this);
 
-        // add to existing lines
-        this.listOfShapes.push(line)
+        // add to existing shapes
+        this.listOfShapes.push(shape);
     };
 
     DrawingPad.prototype.setMode = function (drawModeNum) {
@@ -477,7 +490,8 @@ var DrawingPad = (function (document) {
     };
 
     class Shape {
-        constructor(colour) {
+        constructor(type, colour) {
+            this.type = type;
             this.colour = colour || '#AAAAAA';
         }
 
@@ -488,9 +502,16 @@ var DrawingPad = (function (document) {
 
     }
 
+    const ShapeType = {
+        INKLINE: 'INKLINE',
+        CIRCLE:'CIRCLE',
+        SQUARE: 'SQUARE',
+        TRIANGLE: 'TRIANGLE'
+    };
+
     class InkLine extends Shape {
         constructor(colour) {
-            super(colour);
+            super(ShapeType.INKLINE, colour);
             this.points = [];
 
         }
@@ -515,7 +536,7 @@ var DrawingPad = (function (document) {
         // All we're doing is checking if the values exist.
         // "x || 0" just means "if there is a value for x, use that. Otherwise use 0."
         constructor (x, y, w, h, colour) {
-            super(colour);
+            super(ShapeType.SQUARE, colour);
             this.x = x || 0;
             this.y = y || 0;
             this.w = w || 1;
@@ -542,6 +563,26 @@ var DrawingPad = (function (document) {
         square._draw(this._ctx, this);
     };
 
+    class Circle extends Shape {
+        // This is a very simple and unsafe constructor.
+        // All we're doing is checking if the values exist.
+        // "x || 0" just means "if there is a value for x, use that. Otherwise use 0."
+        constructor (x, y, radius, colour) {
+            super(ShapeType.CIRCLE, colour);
+            this.x = x || 0;
+            this.y = y || 0;
+            this.radius = radius || MIN_CIRCLE_RADIUS;
+        }
+
+        _draw(ctx, drawingPad) {
+            super._draw(ctx, drawingPad);
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+    }
 
     DrawingPad.prototype._createCircle = function (e) {
         var color,
@@ -555,32 +596,12 @@ var DrawingPad = (function (document) {
         circle._draw(this._ctx, this);
     };
 
-    class Circle extends Shape {
-        // This is a very simple and unsafe constructor.
-        // All we're doing is checking if the values exist.
-        // "x || 0" just means "if there is a value for x, use that. Otherwise use 0."
-        constructor (x, y, radius, colour) {
-            super(colour);
-            this.x = x || 0;
-            this.y = y || 0;
-            this.radius = radius || MIN_CIRCLE_RADIUS;
-        }
-
-        _draw(ctx, drawingPad) {
-            super._draw(ctx, drawingPad);
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
-            ctx.closePath();
-            ctx.fill();
-        }
-    }
-
     class Triangle extends Shape {
         // This is a very simple and unsafe constructor.
         // All we're doing is checking if the values exist.
         // "x || 0" just means "if there is a value for x, use that. Otherwise use 0."
         constructor (x, y, w, h, colour) {
-            super(colour);
+            super(ShapeType.TRIANGLE, colour);
             this.x = x || 0;
             this.y = y || 0;
             this.w = w || 1;
