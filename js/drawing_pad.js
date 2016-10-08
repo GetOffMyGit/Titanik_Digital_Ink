@@ -70,39 +70,35 @@ var DrawingPad = (function (document) {
         this._handleMouseDown = function (event) {
             if (event.which === 1) {
                 self._mouseButtonDown = true;
-                self._createCircle(event);
-                //self._strokeBegin(event);
-                var mode = 0;
-                if (mode == 0) {
-                    //self._strokeBegin(event);
-                   
-                }
-                //     case drawModes.CIRCLE:
-                //         self._createCircle(event);
-                //         break;
-                //     default:
-                //        //
-                // }
+
+                // handle depending on selected mode
+                self._startShapeOrLine(event);
             }
         };
 
         this._handleMouseMove = function (event) {
             if (self._mouseButtonDown) {
-                //self._strokeUpdate(event);
+
+                // handle depending on selected mode
+                self._updateShapeOrLineOnMove(event);
             }
         };
 
         this._handleMouseUp = function (event) {
             if (event.which === 1 && self._mouseButtonDown) {
-               // self._mouseButtonDown = false;
-                //self._strokeEnd(event);
+                self._mouseButtonDown = false;
+
+                // handle depending on selected mode
+                self._endShaopeOrLine(event);
             }
         };
 
         this._handleTouchStart = function (event) {
             if (event.targetTouches.length == 1) {
                 var touch = event.changedTouches[0];
-                self._strokeBegin(touch);
+
+                // handle depending on selected mode
+                self._startShapeOrLine(event);
             //}	else if (event.targetTouches.length == 2) {
 			//	swal("Two fingers detected!")
 			 }
@@ -113,14 +109,17 @@ var DrawingPad = (function (document) {
             event.preventDefault();
 
             var touch = event.targetTouches[0];
-            self._strokeUpdate(touch);
+            // handle depending on selected mode
+            self._updateShapeOrLineOnMove(event);
         };
 
         this._handleTouchEnd = function (event) {
             var wasCanvasTouched = event.target === self._canvas;
             if (wasCanvasTouched) {
                 event.preventDefault();
-                self._strokeEnd(event);
+                
+                // handle depending on selected mode
+                self._endShaopeOrLine(event);
             }
         };
 
@@ -524,6 +523,46 @@ var DrawingPad = (function (document) {
         ctx.arc(x, y, radius, 0, Math.PI * 2, true);
         ctx.closePath();
         ctx.fill();
+    };
+
+    DrawingPad.prototype._startShapeOrLine = function(event) {
+        console.log(this.drawMode);
+        switch (this.drawMode) {
+            case drawModes.PEN:
+                console.log("PEN");
+                this._strokeBegin(event);
+                break;
+            case drawModes.CIRCLE:
+                console.log("CIRCLE")
+                this._createCircle(event);
+                break;
+            default:
+                   //
+        }
+    };
+
+    DrawingPad.prototype._updateShapeOrLineOnMove = function(event) {
+        console.log(this.drawMode);
+        switch (this.drawMode) {
+            case drawModes.PEN:
+                console.log("PEN");
+                this._strokeUpdate(event);
+                break;
+            default:
+                   //
+        }
+    };
+
+    DrawingPad.prototype._endShaopeOrLine = function(event) {
+        console.log(this.drawMode);
+        switch (this.drawMode) {
+            case drawModes.PEN:
+                console.log("PEN");
+                this._strokeEnd(event);
+                break;
+            default:
+                   //
+        }
     };
 
     return DrawingPad;
