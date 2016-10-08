@@ -148,6 +148,6 @@ body {
 @media (min-width: 992px) {
   .masthead,
   .mastfoot {
-    /*width: 700px;*/
+    width: 100%;
   }
 }
