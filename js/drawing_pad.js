@@ -117,7 +117,7 @@ var DrawingPad = (function (document) {
             var wasCanvasTouched = event.target === self._canvas;
             if (wasCanvasTouched) {
                 event.preventDefault();
-                
+
                 // handle depending on selected mode
                 self._endShaopeOrLine(event);
             }
@@ -489,21 +489,34 @@ var DrawingPad = (function (document) {
         this.colour = colour || '#AAAAAA';
     }
 
+    DrawingPad.prototype._createSquare = function (e) {
+        var color,
+            radius = 20,
+            width = 20,
+            height = 20;
+
+        var centerPoint = this._createPoint(e);
+
+        var square = new Square (centerPoint.x - width/2, centerPoint.y - height/2, width, height, color);
+        this.shapes.push(square);
+
+        square._draw(this._ctx);
+    };
+
+    Square.prototype._draw = function(ctx) {
+        ctx.fillStyle = this.colour;
+        ctx.fillRect(this.x, this.y, this.w, this.h);
+    };
+
     var Circle = function (x, y, radius, colour) {
-        // This is a very simple and unsafe constructor.
-        // All we're doing is checking if the values exist.
-        // "x || 0" just means "if there is a value for x, use that. Otherwise use 0."
         this.x = x || 0;
         this.y = y || 0;
         this.radius = radius || MIN_CIRCLE_RADIUS;
         this.colour = colour || '#AAAAAA';
     }
 
-
     DrawingPad.prototype._createCircle = function (e) {
-        var intColor,
-            hexColor,
-            color,
+        var color,
             radius = 20;
 
         var centerPoint = this._createPoint(e);
@@ -511,41 +524,77 @@ var DrawingPad = (function (document) {
         var circle = new Circle (centerPoint.x, centerPoint.y, radius, color);
         this.shapes.push(circle);
 
-        console.log(circle);
-        this._drawCircle(circle.x, circle.y, circle.radius, circle.colour);
-
+        circle._draw(this._ctx);
     };
 
     //https://github.com/ArthurClemens/Javascript-Undo-Manager/blob/master/demo/js/circledrawer.js
-     DrawingPad.prototype._drawCircle = function(x, y, radius, colour) {
-        var ctx = this._ctx;
+    Circle.prototype._draw = function(ctx) {
+        ctx.fillStyle = this.colour;
         ctx.beginPath();
-        ctx.arc(x, y, radius, 0, Math.PI * 2, true);
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
+        ctx.closePath();
+        ctx.fill();
+    };
+
+    var Triangle = function (x, y, w, h, colour) {
+        this.x = x || 0;
+        this.y = y || 0;
+        this.w = w || 1;
+        this.h = h || 1;
+        this.colour = colour || '#AAAAAA';
+    }
+
+    DrawingPad.prototype._createTriangle = function (e) {
+        var color,
+            radius = 20,
+            width = 20,
+            height = 20;
+
+        var centerPoint = this._createPoint(e);
+        var triangle = new Triangle (centerPoint.x, centerPoint.y, width, height, color);
+        this.shapes.push(triangle);
+
+        triangle._draw(this._ctx);
+    };
+
+    Triangle.prototype._draw = function(ctx) {
+        ctx.fillStyle = this.colour;
+
+        ctx.beginPath();
+        // triangle created in the center of mouse
+        ctx.moveTo(this.x + (this.w/2), this.y + (this.h/2));
+        ctx.lineTo(this.x, this.y - (this.h/2));
+        ctx.lineTo(this.x - (this.w/2),  this.y + (this.h/2));
+
+        // triangle created at right corner
+        // ctx.moveTo(this.x, this.y);
+        // ctx.lineTo(this.x - (this.w/2), this.y - (this.h));
+        // ctx.lineTo(this.x - this.w, this.y);
         ctx.closePath();
         ctx.fill();
     };
 
     DrawingPad.prototype._startShapeOrLine = function(event) {
-        console.log(this.drawMode);
         switch (this.drawMode) {
             case drawModes.PEN:
-                console.log("PEN");
                 this._strokeBegin(event);
                 break;
             case drawModes.CIRCLE:
-                console.log("CIRCLE")
                 this._createCircle(event);
                 break;
+            case drawModes.SQUARE:
+                this._createSquare(event);
+                break;
+            case drawModes.TRIANGLE:
+                this._createTriangle(event);
             default:
                    //
         }
     };
 
     DrawingPad.prototype._updateShapeOrLineOnMove = function(event) {
-        console.log(this.drawMode);
         switch (this.drawMode) {
             case drawModes.PEN:
-                console.log("PEN");
                 this._strokeUpdate(event);
                 break;
             default:
@@ -554,10 +603,8 @@ var DrawingPad = (function (document) {
     };
 
     DrawingPad.prototype._endShaopeOrLine = function(event) {
-        console.log(this.drawMode);
         switch (this.drawMode) {
             case drawModes.PEN:
-                console.log("PEN");
                 this._strokeEnd(event);
                 break;
             default:
