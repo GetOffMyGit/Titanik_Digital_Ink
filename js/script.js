@@ -12,9 +12,13 @@ $(document).ready(function() {
 	var undoButton = $("#undoButton")[0];
     var saveButton = $("#saveButton")[0];
     var loadButton = $("#loadButton")[0];
-    var downloadRef = $("#download")[0];
+    var downloadRef = $("#downloadLink")[0];
+    var penButton = $("#penButton")[0];
+    var circleShapeButton = $("#circleShapeButton")[0];
+    var squareShapeButton = $("#squareShapeButton")[0];
+    var triangleShapeButton = $("#triangleShapeButton")[0];
 
-    $("#download").hide();
+    $("#downloadLink").hide();
 	
 	undoButton.addEventListener("click", function () {
 		drawingPad.undo();
@@ -41,13 +45,13 @@ $(document).ready(function() {
 	});
 	
     saveButton.addEventListener("click", function () {
-        var inkLines = drawingPad.getInkLines();
+        var inkLines = drawingPad.getListOfShapes();
 
         var json = JSON.stringify(inkLines);
         var blob = new Blob([json], {type: "application/json"});
         var url  = URL.createObjectURL(blob);
 
-        $("#download").show();
+        $("#downloadLink").show();
         downloadRef.download = "inks.json";
         downloadRef.href        = url;
         downloadRef.textContent = "Download inks.json";
@@ -70,6 +74,29 @@ $(document).ready(function() {
             // allow ink after input done
             drawingPad.on();
         });
+    });
+
+    
+    // keeps one draw tool always "active"
+    $(".draw-tool").click(function(){
+        $(".draw-tool").removeClass("active");
+        $(this).addClass("active");
+    });
+
+    penButton.addEventListener("click", function () {
+        drawingPad.setMode(0);
+    });
+
+    circleShapeButton.addEventListener("click", function () {
+        drawingPad.setMode(1);
+    });
+
+    squareShapeButton.addEventListener("click", function () {
+        drawingPad.setMode(2);
+    });
+
+    triangleShapeButton.addEventListener("click", function () {
+        drawingPad.setMode(3);
     });
 });
 

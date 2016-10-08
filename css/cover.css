@@ -15,8 +15,8 @@ a:hover {
 .btn-default:focus {
   color: #333;
   text-shadow: none; /* Prevent inheritance from `body` */
-  background-color: #fff;
-  border: 1px solid #fff;
+  /*background-color: #fff;*/
+  /*border: 1px solid #fff;*/
 }
 
 /*
@@ -148,6 +148,6 @@ body {
 @media (min-width: 992px) {
   .masthead,
   .mastfoot {
-    width: 700px;
+    /*width: 700px;*/
   }
 }

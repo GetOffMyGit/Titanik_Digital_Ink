@@ -35,6 +35,13 @@
 var DrawingPad = (function (document) {
     "use strict";
 
+    const drawModes = {
+        PEN: 0,
+        CIRCLE: 1,
+        SQUARE: 2,
+        TRIANGLE: 3
+    };
+
     var DrawingPad = function (canvas, options) {
         var self = this,
             opts = options || {};
@@ -54,6 +61,8 @@ var DrawingPad = (function (document) {
         this.onBegin = opts.onBegin;
         this.inkLines = [];
 		this.undoStack = [];
+        this.listOfShapes = [];
+        this.drawMode = drawModes.PEN;
         // holds the lines currently selected by the user
         this.selectedLines = [];
         // used to determine if double tap or single tap
@@ -68,24 +77,31 @@ var DrawingPad = (function (document) {
         this._handleMouseDown = function (event) {
             if (event.which === 1) {
                 self._mouseButtonDown = true;
-                self._strokeBegin(event);
+
+                // handle depending on selected mode
+                self._startShapeOrLine(event);
             }
         };
 
         this._handleMouseMove = function (event) {
             if (self._mouseButtonDown) {
-                self._strokeUpdate(event);
+
+                // handle depending on selected mode
+                self._updateShapeOrLineOnMove(event);
             }
         };
 
         this._handleMouseUp = function (event) {
             if (event.which === 1 && self._mouseButtonDown) {
                 self._mouseButtonDown = false;
-                self._strokeEnd(event);
+
+                // handle depending on selected mode
+                self._endShaopeOrLine(event);
             }
         };
 
         this._handleTouchStart = function (event) {
+             
             // if single finger used in touch
             if (event.targetTouches.length == 1) {
                     var context = this;
@@ -94,7 +110,8 @@ var DrawingPad = (function (document) {
                         this.touchTimer = setTimeout(function () {
                             context.touchTimer = null;
                             var touch = event.changedTouches[0];
-                            self._strokeBegin(touch);
+                            // handle depending on selected mode
+                            self._startShapeOrLine(touch);
                         }, 500)
                     // otherwise it is a double tap
                     } else {                
@@ -106,8 +123,8 @@ var DrawingPad = (function (document) {
                         clearTimeout(context.touchTimer);
                         context.touchTimer = null;
                     }                
-            //}	else if (event.targetTouches.length == 2) {
-			//	swal("Two fingers detected!")
+            // //}	else if (event.targetTouches.length == 2) {
+			// //	swal("Two fingers detected!")
 			 }
         };
 
@@ -123,14 +140,17 @@ var DrawingPad = (function (document) {
                 self._reset();
             }
             var touch = event.targetTouches[0];
-            self._strokeUpdate(touch);
+            // handle depending on selected mode
+            self._updateShapeOrLineOnMove(touch);
         };
 
         this._handleTouchEnd = function (event) {
             var wasCanvasTouched = event.target === self._canvas;
             if (wasCanvasTouched) {
                 event.preventDefault();
-                self._strokeEnd(event);
+
+                // handle depending on selected mode
+                self._endShaopeOrLine(event);
             }
         };
 
@@ -201,7 +221,8 @@ var DrawingPad = (function (document) {
             point = this.points[0];
 
         // save to local storage
-        this.inkLines.push(this.allpoints);
+        this.inkLines.push(this.inkLine);
+        this.listOfShapes.push(this.inkLine);
 
         localStorage.setItem('line', JSON.stringify(this.inkLines));
 
@@ -255,11 +276,11 @@ var DrawingPad = (function (document) {
         var colorToUse = lineColor || this.penColor;
 
         this.points = [];
-        this.allpoints = [];
         this._lastVelocity = 0;
         this._lastWidth = (this.minWidth + this.maxWidth) / 2;
         this._isEmpty = true;
         this._ctx.fillStyle = colorToUse;
+        this.inkLine = new InkLine(this.penColor);
     };
 
     DrawingPad.prototype._createPoint = function (event) {
@@ -276,7 +297,7 @@ var DrawingPad = (function (document) {
             curve, tmp;
 
         points.push(point);
-        this.allpoints.push(point);
+        this.inkLine._addPointToLine(point);
 
         if (points.length > 2) {
             // To reduce the initial lag make it work with 3 points
@@ -385,35 +406,38 @@ var DrawingPad = (function (document) {
     DrawingPad.prototype.getInkLines = function () {
         return this.inkLines;
     };
+
+    DrawingPad.prototype.getListOfShapes = function () {
+        return this.listOfShapes;
+    };
 	
 	DrawingPad.prototype.undo = function () {
-		if (this.inkLines.length != 0) {
-			this.undoStack.push(this.inkLines.pop());
+		if (this.listOfShapes.length != 0) {
+			this.undoStack.push(this.listOfShapes.pop());
 			this.clear();
 			
-			this.drawLines();
+			this.drawShapes();
 		}
 	};
 	
 	DrawingPad.prototype.redo = function () {
 		if (this.undoStack.length != 0) {
-			this.inkLines.push(this.undoStack.pop());
+			this.listOfShapes.push(this.undoStack.pop());
 			this.clear();
 			
-			this.drawLines();
+			this.drawShapes();
 		}
 	};
 
-	DrawingPad.prototype.drawLines = function () {
-		for(var i = 0; i < this.inkLines.length; i++) {
-			var line = this.getInkLines()[i];
-			this._reset();
-			for(var j = 0; j < line.length; j++) {
-				var point = line[j];
-				this._addPoint(point);
-			}
+    /**
+     * Draw all shapes in listOfShapes to the canvas
+     */
+	DrawingPad.prototype.drawShapes = function () {
+        // redraw all shapes again
+		for(var i = 0; i < this.listOfShapes.length; i++) {
+			var shape = this.listOfShapes[i];
+            shape._draw(this._ctx, this);
 		}
-		
 	}
 	
     /**
@@ -434,8 +458,8 @@ var DrawingPad = (function (document) {
         // find the line which is closest to the touched position
 		for(var i = 0; i < this.inkLines.length; i++) {
 			var line = this.getInkLines()[i];
-			for(var j = 0; j < line.length; j++) {
-				var point = line[j];                
+			for(var j = 0; j < line.points.length; j++) {
+				var point = line.points[j];                
 				currentDistance = point.distanceTo(touchCoords);
                 if (currentDistance < smallestDistance && currentDistance <= this.distanceThreshold) {
                     closestLine = line;
@@ -460,11 +484,19 @@ var DrawingPad = (function (document) {
 			var line = this.getInkLines()[i];
 			// check current line is not selected
             if (jQuery.inArray(line, this.selectedLines) == -1) {
-                for(var j = 0; j < line.length; j++) {
-                    var point = line[j];
+                for(var j = 0; j < line.points.length; j++) {
+                    var point = line.points[j];
                     var pointObj = new Point(point.x, point.y, point.time);
                     this._addPoint(pointObj);                    
                 }
+            }
+		}
+
+        // TEMPORARY ; will fix above
+        for(var i = 0; i < this.listOfShapes.length; i++) {
+			var shape = this.listOfShapes[i];
+            if (shape.type != ShapeType.INKLINE) {
+                shape._draw(this._ctx, this);
             }
 		}
 
@@ -474,8 +506,8 @@ var DrawingPad = (function (document) {
             this._reset(this.selectedColor);
 			var line = this.selectedLines[i];
             if (line != null) {
-                for(var j = 0; j < line.length; j++) {
-                    var point = line[j];
+                for(var j = 0; j < line.points.length; j++) {
+                    var point = line.points[j];
                     var pointObj = new Point(point.x, point.y, point.time);
                     this._addPoint(pointObj);    
                 }
@@ -486,27 +518,50 @@ var DrawingPad = (function (document) {
         this._ctx.fillStyle = this.penColor;
     }
 
-    DrawingPad.prototype.drawFromJson = function (jsonLine) {
-        // reset line property
+    /**
+     * Draw a shape based on its json values passed in
+     */
+	DrawingPad.prototype.drawFromJson = function (jsonShape) {
         this._reset();
         
-        var line = [];
+        var shape;
 
-        // iterate through each point
-        for(var i = 0; i < jsonLine.length; i++) {
-                var jsonPoint = jsonLine[i];
+        switch (jsonShape.type) {
+            case ShapeType.INKLINE:
+                shape = new InkLine('green');
+                // iterate through each point
+                for(var i = 0; i < jsonShape.points.length; i++) {
+                        var jsonPoint = jsonShape.points[i];
 
-                // create javaObject point from json values
-                var point = new Point(jsonPoint.x, jsonPoint.y, jsonPoint.time);
-
-                // add point to the drawing_pad - same logic as when mouse down
-                this._addPoint(point);
-                
-                line.push(point);
+                        // create javaObject point from json values
+                        var point = new Point(jsonPoint.x, jsonPoint.y, jsonPoint.time);
+                        
+                        shape._addPointToLine(point);
+                }
+                break;
+            case ShapeType.SQUARE:
+                shape = new Square (jsonShape.x, jsonShape.y, jsonShape.w, jsonShape.h, jsonShape.colour);
+                break;
+            case ShapeType.CIRCLE:
+                shape = new Circle (jsonShape.x, jsonShape.y, jsonShape.radius, jsonShape.colour);
+                break;
+            case ShapeType.TRIANGLE:
+                shape = new Triangle (jsonShape.x, jsonShape.y, jsonShape.w, jsonShape.h, jsonShape.colour);
+                break;
         }
 
-        // add to existing lines
-        this.inkLines.push(line)
+        // redraw shape
+        shape._draw(this._ctx, this);
+
+        // add to existing shapes
+        this.listOfShapes.push(shape);
+    };
+
+    /**
+     * Set the drawing mode
+     */
+    DrawingPad.prototype.setMode = function (drawModeNum) {
+        this.drawMode = drawModeNum;
     };
 
     var Point = function (x, y, time) {
@@ -556,6 +611,220 @@ var DrawingPad = (function (document) {
                + 3.0 *  c1    * (1.0 - t) * (1.0 - t)  * t
                + 3.0 *  c2    * (1.0 - t) * t          * t
                +        end   * t         * t          * t;
+    };
+
+    /**
+     * Generic Shape class with standard constructor and _draw to be called
+     */
+    class Shape {
+        constructor(type, colour) {
+            this.type = type;
+            this.colour = colour || '#AAAAAA';
+        }
+
+        _draw(ctx, drawingPad) {
+            drawingPad._reset();
+            ctx.fillStyle = this.colour;
+        }
+
+    }
+
+    /**
+     * Identifies the shape
+     */
+    const ShapeType = {
+        INKLINE: 'INKLINE',
+        CIRCLE:'CIRCLE',
+        SQUARE: 'SQUARE',
+        TRIANGLE: 'TRIANGLE'
+    };
+
+    /**
+     * Represent a line of ink "stroke"
+     */
+    class InkLine extends Shape {
+        constructor(colour) {
+            super(ShapeType.INKLINE, colour);
+            this.points = [];
+
+        }
+
+        _draw(ctx, drawingPad) {
+            super._draw(ctx, drawingPad);
+
+            // adds each individual point to drawing pad 			
+			for(var j = 0; j < this.points.length; j++) {
+				var point = this.points[j];
+				drawingPad._addPoint(point);
+			}
+        }
+
+        _addPointToLine(point) {
+            this.points.push(point);
+        }
+
+    }
+
+    /**
+     * Represent a square/rectangle object
+     */
+    class Square extends Shape {
+        // This is a very simple and unsafe constructor.
+        // All we're doing is checking if the values exist.
+        // "x || 0" just means "if there is a value for x, use that. Otherwise use 0."
+        constructor (x, y, w, h, colour) {
+            super(ShapeType.SQUARE, colour);
+            this.x = x || 0;
+            this.y = y || 0;
+            this.w = w || 1;
+            this.h = h || 1;
+        }
+
+        _draw(ctx, drawingPad) {
+            super._draw(ctx, drawingPad);
+            ctx.fillRect(this.x, this.y, this.w, this.h);
+        }
+    }
+
+    /**
+     *  Creates a square where specified
+     */
+    DrawingPad.prototype._createSquare = function (e) {
+        var color,
+            radius = 20,
+            width = 20,
+            height = 20;
+
+        var centerPoint = this._createPoint(e);
+
+        var square = new Square (centerPoint.x - width/2, centerPoint.y - height/2, width, height, color);
+        this.listOfShapes.push(square);
+
+        square._draw(this._ctx, this);
+    };
+
+    /**
+     * Represent a circle object
+     */
+    class Circle extends Shape {
+        constructor (x, y, radius, colour) {
+            super(ShapeType.CIRCLE, colour);
+            this.x = x || 0;
+            this.y = y || 0;
+            this.radius = radius || MIN_CIRCLE_RADIUS;
+        }
+
+        _draw(ctx, drawingPad) {
+            super._draw(ctx, drawingPad);
+            ctx.beginPath();
+
+            // draws an arc that is 360 --> circle
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
+            ctx.closePath();
+
+            // fills in the path to create  a filled circle
+            ctx.fill();
+        }
+        
+    }
+
+    /**
+     *  Creates a circle where specified
+     */
+    DrawingPad.prototype._createCircle = function (e) {
+        var color,
+            radius = 20;
+
+        var centerPoint = this._createPoint(e);
+
+        var circle = new Circle (centerPoint.x, centerPoint.y, radius, color);
+        this.listOfShapes.push(circle);
+
+        circle._draw(this._ctx, this);
+    };
+
+    /**
+     * Represent a triangle object
+     */
+    class Triangle extends Shape {
+        constructor (x, y, w, h, colour) {
+            super(ShapeType.TRIANGLE, colour);
+            this.x = x || 0;
+            this.y = y || 0;
+            this.w = w || 1;
+            this.h = h || 1;
+        }
+
+        _draw(ctx, drawingPad) {
+            super._draw(ctx, drawingPad);
+
+            ctx.beginPath();
+            // triangle created in the center of mouse
+            ctx.moveTo(this.x + (this.w/2), this.y + (this.h/2));
+            ctx.lineTo(this.x, this.y - (this.h/2));
+            ctx.lineTo(this.x - (this.w/2),  this.y + (this.h/2));
+
+            // triangle created at right corner
+            // ctx.moveTo(this.x, this.y);
+            // ctx.lineTo(this.x - (this.w/2), this.y - (this.h));
+            // ctx.lineTo(this.x - this.w, this.y);
+            ctx.closePath();
+            ctx.fill();
+        }
+    }
+
+    /**
+     *  Creates a triangle where specified
+     */
+    DrawingPad.prototype._createTriangle = function (e) {
+        var color,
+            radius = 20,
+            width = 20,
+            height = 20;
+
+        var centerPoint = this._createPoint(e);
+        var triangle = new Triangle (centerPoint.x, centerPoint.y, width, height, color);
+        this.listOfShapes.push(triangle);
+
+        triangle._draw(this._ctx, this);
+    };
+
+    DrawingPad.prototype._startShapeOrLine = function(event) {
+        switch (this.drawMode) {
+            case drawModes.PEN:
+                this._strokeBegin(event);
+                break;
+            case drawModes.CIRCLE:
+                this._createCircle(event);
+                break;
+            case drawModes.SQUARE:
+                this._createSquare(event);
+                break;
+            case drawModes.TRIANGLE:
+                this._createTriangle(event);
+            default:
+                   //
+        }
+    };
+
+    DrawingPad.prototype._updateShapeOrLineOnMove = function(event) {
+        switch (this.drawMode) {
+            case drawModes.PEN:
+                this._strokeUpdate(event);
+                break;
+            default:
+                   //
+        }
+    };
+
+    DrawingPad.prototype._endShaopeOrLine = function(event) {
+        switch (this.drawMode) {
+            case drawModes.PEN:
+                this._strokeEnd(event);
+                break;
+            default:
+                   //
+        }
     };
 
     return DrawingPad;
