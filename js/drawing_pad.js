@@ -46,11 +46,18 @@ var DrawingPad = (function (document) {
             return (this.minWidth + this.maxWidth) / 2;
         };
         this.penColor = opts.penColor || "black";
+        this.selectedColor = "yellow";
         this.backgroundColor = opts.backgroundColor || "rgba(0,0,0,0)";
+        // how close the user must touch to a line to actually select it
+        this.distanceThreshold = 20;  
         this.onEnd = opts.onEnd;
         this.onBegin = opts.onBegin;
         this.inkLines = [];
 		this.undoStack = [];
+        // holds the lines currently selected by the user
+        this.selectedLines = [];
+        // used to determine if double tap or single tap
+        this.touchTimer = null;
 
         this._canvas = canvas;
         this._ctx = canvas.getContext("2d");
@@ -79,9 +86,26 @@ var DrawingPad = (function (document) {
         };
 
         this._handleTouchStart = function (event) {
+            // if single finger used in touch
             if (event.targetTouches.length == 1) {
-                var touch = event.changedTouches[0];
-                self._strokeBegin(touch);
+                    var context = this;
+                    // if user does not tap again in timeout time limit then it is a single tap
+                    if (this.touchTimer == null) {
+                        this.touchTimer = setTimeout(function () {
+                            context.touchTimer = null;
+                            var touch = event.changedTouches[0];
+                            self._strokeBegin(touch);
+                        }, 500)
+                    // otherwise it is a double tap
+                    } else {                
+                        // get line selected by user and highlight it
+                        var touch = event.targetTouches[0];
+                        self.selectLine(touch);
+                        self.highlightSelectedLines();
+                        // reset touch timer  
+                        clearTimeout(context.touchTimer);
+                        context.touchTimer = null;
+                    }                
             //}	else if (event.targetTouches.length == 2) {
 			//	swal("Two fingers detected!")
 			 }
@@ -90,7 +114,14 @@ var DrawingPad = (function (document) {
         this._handleTouchMove = function (event) {
             // Prevent scrolling.
             event.preventDefault();
-
+            // if user is dragging their finger, check if they are drawing (single tap)
+            if (this.touchTimer != null) {
+                // if they are drawing after a single tap, kill the timeout callback so another stroke is not drawn
+                clearTimeout(this.touchTimer);
+                this.touchTimer = null;
+                // reset drawing pad variables so newly drawn line is NOT continued from previously drawn line
+                self._reset();
+            }
             var touch = event.targetTouches[0];
             self._strokeUpdate(touch);
         };
@@ -219,13 +250,16 @@ var DrawingPad = (function (document) {
         return this._isEmpty;
     };
 
-    DrawingPad.prototype._reset = function () {
+    DrawingPad.prototype._reset = function (lineColor) {
+        // if different colour passed for line, use that instead of default pen color
+        var colorToUse = lineColor || this.penColor;
+
         this.points = [];
         this.allpoints = [];
         this._lastVelocity = 0;
         this._lastWidth = (this.minWidth + this.maxWidth) / 2;
         this._isEmpty = true;
-        this._ctx.fillStyle = this.penColor;
+        this._ctx.fillStyle = colorToUse;
     };
 
     DrawingPad.prototype._createPoint = function (event) {
@@ -382,6 +416,76 @@ var DrawingPad = (function (document) {
 		
 	}
 	
+    /**
+     * Using touchevent from user, identifies the closest drawn line and stores it as "selected"
+     */
+    DrawingPad.prototype.selectLine = function (event) {
+        var rect = this._canvas.getBoundingClientRect();
+        // get touch coordinates within drawing canvas
+        var touchCoords = {
+            x : event.clientX - rect.left,
+            y : event.clientY - rect.top
+        }
+        var closestLine = null;
+        // unlikely to have a resolution where 900000 is applicable
+        var smallestDistance = 900000;
+        var currentDistance = null;           
+        
+        // find the line which is closest to the touched position
+		for(var i = 0; i < this.inkLines.length; i++) {
+			var line = this.getInkLines()[i];
+			for(var j = 0; j < line.length; j++) {
+				var point = line[j];                
+				currentDistance = point.distanceTo(touchCoords);
+                if (currentDistance < smallestDistance && currentDistance <= this.distanceThreshold) {
+                    closestLine = line;
+                    smallestDistance = currentDistance;
+                }
+			}
+		}
+        // store line as a selected line
+        this.selectedLines.push(closestLine);
+	};
+
+    /**
+     * Highlights all lines selected by the user
+     */
+    DrawingPad.prototype.highlightSelectedLines = function (event) {
+        // clear the canvas before drawing
+        this.clear();
+
+        // draw unselected lines first in the default colour
+        for(var i = 0; i < this.inkLines.length; i++) {
+            this._reset();
+			var line = this.getInkLines()[i];
+			// check current line is not selected
+            if (jQuery.inArray(line, this.selectedLines) == -1) {
+                for(var j = 0; j < line.length; j++) {
+                    var point = line[j];
+                    var pointObj = new Point(point.x, point.y, point.time);
+                    this._addPoint(pointObj);                    
+                }
+            }
+		}
+
+        // draw the selected lines
+        for(var i = 0; i < this.selectedLines.length; i++) {
+            // change canvas drawing colour to highlight colour and reset line property for each line to be drawn
+            this._reset(this.selectedColor);
+			var line = this.selectedLines[i];
+            if (line != null) {
+                for(var j = 0; j < line.length; j++) {
+                    var point = line[j];
+                    var pointObj = new Point(point.x, point.y, point.time);
+                    this._addPoint(pointObj);    
+                }
+            }
+		}
+
+        // change back to default pen color
+        this._ctx.fillStyle = this.penColor;
+    }
+
     DrawingPad.prototype.drawFromJson = function (jsonLine) {
         // reset line property
         this._reset();
