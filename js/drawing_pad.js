@@ -49,7 +49,7 @@ var DrawingPad = (function (document) {
         this.selectedColor = "yellow";
         this.backgroundColor = opts.backgroundColor || "rgba(0,0,0,0)";
         // how close the user must touch to a line to actually select it
-        var distanceThreshold = 20;  
+        this.distanceThreshold = 20;  
         this.onEnd = opts.onEnd;
         this.onBegin = opts.onBegin;
         this.inkLines = [];
@@ -437,7 +437,7 @@ var DrawingPad = (function (document) {
 			for(var j = 0; j < line.length; j++) {
 				var point = line[j];                
 				currentDistance = point.distanceTo(touchCoords);
-                if (currentDistance < smallestDistance && currentDistance <= distanceThreshold) {
+                if (currentDistance < smallestDistance && currentDistance <= this.distanceThreshold) {
                     closestLine = line;
                     smallestDistance = currentDistance;
                 }
