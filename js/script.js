@@ -9,6 +9,7 @@ $(document).ready(function() {
 
     drawingPad.on();
 	
+    var deselectButton = $("#deselectButton")[0];
 	var undoButton = $("#undoButton")[0];
     var saveButton = $("#saveButton")[0];
     var loadButton = $("#loadButton")[0];
@@ -20,6 +21,10 @@ $(document).ready(function() {
 
     $("#downloadLink").hide();
 	
+    deselectButton.addEventListener("click", function () {
+		drawingPad.deselectShapes();
+	});
+
 	undoButton.addEventListener("click", function () {
 		drawingPad.undo();
 	});

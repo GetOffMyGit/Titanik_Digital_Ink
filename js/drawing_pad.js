@@ -64,9 +64,15 @@ var DrawingPad = (function (document) {
         this.listOfShapes = [];
         this.drawMode = drawModes.PEN;
         // holds the lines currently selected by the user
-        this.selectedLines = [];
+        this.selectedShapes = [];
         // used to determine if double tap or single tap
         this.touchTimer = null;
+        this.isDoubleTap = false;
+        // used to determine distance user has dragged their finger
+        this.oldPos = {
+            x: null,
+            y: null
+        };
 
         this._canvas = canvas;
         this._ctx = canvas.getContext("2d");
@@ -105,11 +111,14 @@ var DrawingPad = (function (document) {
             // if single finger used in touch
             if (event.targetTouches.length == 1) {
                     var context = this;
+                    // record where user has tapped in case they are dragging selected shapes
+                    var touch = event.changedTouches[0];
+                    self.oldPos.x = touch.clientX - self._canvas.getBoundingClientRect().left;
+                    self.oldPos.y = touch.clientY - self._canvas.getBoundingClientRect().top;
                     // if user does not tap again in timeout time limit then it is a single tap
                     if (this.touchTimer == null) {
                         this.touchTimer = setTimeout(function () {
-                            context.touchTimer = null;
-                            var touch = event.changedTouches[0];
+                            context.touchTimer = null;                            
                             // handle depending on selected mode
                             self._startShapeOrLine(touch);
                         }, 500)
@@ -117,11 +126,13 @@ var DrawingPad = (function (document) {
                     } else {                
                         // get line selected by user and highlight it
                         var touch = event.targetTouches[0];
-                        self.selectLine(touch);
-                        self.highlightSelectedLines();
+                        self.selectShape(touch);
+                        self.highlightSelectedShapes();
                         // reset touch timer  
                         clearTimeout(context.touchTimer);
                         context.touchTimer = null;
+                        // signal to touchend that double tap has occurred
+                        self.isDoubleTap = true;
                     }                
             // //}	else if (event.targetTouches.length == 2) {
 			// //	swal("Two fingers detected!")
@@ -137,11 +148,20 @@ var DrawingPad = (function (document) {
                 clearTimeout(this.touchTimer);
                 this.touchTimer = null;
                 // reset drawing pad variables so newly drawn line is NOT continued from previously drawn line
-                self._reset();
+                self._reset();                
             }
             var touch = event.targetTouches[0];
-            // handle depending on selected mode
-            self._updateShapeOrLineOnMove(touch);
+            // check if user has selected shapes, if so, they are now attempting to drag to reposition shapes
+            if (self.selectedShapes[0] != null) {
+                self.updateSelectedShapePositions(touch);
+                // clear canvas and redraw unselected shapes and selected shapes (which have now moved)
+                self.clear();
+                self.drawShapes(self.selectedShapes);
+                self.drawShapes(self.getUnselectedShapes());
+            } else {
+                // handle depending on selected mode
+                self._updateShapeOrLineOnMove(touch);
+            }
         };
 
         this._handleTouchEnd = function (event) {
@@ -172,6 +192,7 @@ var DrawingPad = (function (document) {
 		this.undoStack = [];
 		this.inkLines = [];
 		this.listOfShapes = [];
+        this.selectedShapes = [];
 	}
 
     DrawingPad.prototype.toDataURL = function (imageType, quality) {
@@ -220,11 +241,32 @@ var DrawingPad = (function (document) {
     DrawingPad.prototype._strokeEnd = function (event) {
         var canDrawCurve = this.points.length > 2,
             point = this.points[0];
+        
+        if (!this.isDoubleTap) {
+            // save to local storage (if user is not selecting but is actually drawing)
+            if (jQuery.inArray(this.inkLine, this.inkLines) == -1) {
+                this.inkLines.push(this.inkLine);
+            }
 
-        // save to local storage
-        this.inkLines.push(this.inkLine);
-        this.listOfShapes.push(this.inkLine);
-
+            // check that the previously drawn line is not being drawn again
+            var isExistingLine = false;
+            for(var i = 0; i < this.listOfShapes.length; i++) {
+                var shape = this.listOfShapes[i];
+                if (shape.type == ShapeType.INKLINE) {
+                    if (this.inkLine.points.compare(shape.points)) {
+                        isExistingLine = true;
+                    }
+                }
+            }
+            if (!isExistingLine) {
+                console.log("here");
+                this.listOfShapes.push(this.inkLine);
+            }
+        } else {
+            // reset double tap flag
+            this.isDoubleTap = false;
+        }
+        
         localStorage.setItem('line', JSON.stringify(this.inkLines));
 
         if (!canDrawCurve && point) {
@@ -431,92 +473,169 @@ var DrawingPad = (function (document) {
 	};
 
     /**
-     * Draw all shapes in listOfShapes to the canvas
+     * Draw all shapes in given array to the canvas. If no array is passed this function will redraw all shapes
      */
-	DrawingPad.prototype.drawShapes = function () {
+	DrawingPad.prototype.drawShapes = function (shapes) {
+        var shapeArray = shapes || this.listOfShapes;
+
         // redraw all shapes again
-		for(var i = 0; i < this.listOfShapes.length; i++) {
-			var shape = this.listOfShapes[i];
+		for(var i = 0; i < shapeArray.length; i++) {
+			var shape = shapeArray[i];
             shape._draw(this._ctx, this);
 		}
 	}
 	
     /**
-     * Using touchevent from user, identifies the closest drawn line and stores it as "selected"
+     * Using touchevent from user, identifies the closest drawn shape and stores it as "selected"
      */
-    DrawingPad.prototype.selectLine = function (event) {
+    DrawingPad.prototype.selectShape = function (event) {
         var rect = this._canvas.getBoundingClientRect();
         // get touch coordinates within drawing canvas
         var touchCoords = {
             x : event.clientX - rect.left,
             y : event.clientY - rect.top
         }
-        var closestLine = null;
+        var closestShape = null;
         // unlikely to have a resolution where 900000 is applicable
         var smallestDistance = 900000;
         var currentDistance = null;           
         
-        // find the line which is closest to the touched position
-		for(var i = 0; i < this.inkLines.length; i++) {
-			var line = this.getInkLines()[i];
-			for(var j = 0; j < line.points.length; j++) {
-				var point = line.points[j];                
-				currentDistance = point.distanceTo(touchCoords);
-                if (currentDistance < smallestDistance && currentDistance <= this.distanceThreshold) {
-                    closestLine = line;
-                    smallestDistance = currentDistance;
-                }
-			}
-		}
-        // store line as a selected line
-        this.selectedLines.push(closestLine);
-	};
-
-    /**
-     * Highlights all lines selected by the user
-     */
-    DrawingPad.prototype.highlightSelectedLines = function (event) {
-        // clear the canvas before drawing
-        this.clear();
-
-        // draw unselected lines first in the default colour
-        for(var i = 0; i < this.inkLines.length; i++) {
-            this._reset();
-			var line = this.getInkLines()[i];
-			// check current line is not selected
-            if (jQuery.inArray(line, this.selectedLines) == -1) {
-                for(var j = 0; j < line.points.length; j++) {
-                    var point = line.points[j];
-                    var pointObj = new Point(point.x, point.y, point.time);
-                    this._addPoint(pointObj);                    
+        // find the shape which is closest to the touched position
+		for(var i = 0; i < this.listOfShapes.length; i++) {
+			var shape = this.listOfShapes[i];
+            // if the current shape is not already selected
+            if (jQuery.inArray(shape, this.selectedShapes) == -1) {
+                // if current shape is an ink line
+                if (shape.type == ShapeType.INKLINE) {
+                    // go through each point of the ink line to determine if this line is closest to touch position
+                    for(var j = 0; j < shape.points.length; j++) {
+                        var point = shape.points[j];                
+                        currentDistance = point._distanceTo(touchCoords);
+                        if (currentDistance < smallestDistance && currentDistance <= this.distanceThreshold) {
+                            closestShape = shape;
+                            smallestDistance = currentDistance;
+                        }
+                    }
+                } else {
+                    // check distance between touch position and centre of shape to determine if closest
+                    currentDistance = shape._distanceTo(touchCoords);
+                    if (currentDistance < smallestDistance && currentDistance <= this.distanceThreshold) {
+                        closestShape = shape;
+                        smallestDistance = currentDistance;
+                    }
                 }
             }
 		}
 
-        // TEMPORARY ; will fix above
+        // store line as a selected line
+        if (closestShape != null) {
+            this.selectedShapes.push(closestShape);
+        }
+	};
+
+    /**
+     * Highlights all shapes selected by the user
+     */
+    DrawingPad.prototype.highlightSelectedShapes = function (event) {
+        // clear the canvas before drawing
+        this.clear();
+
+        // draw unselected shapes first in the default colour
         for(var i = 0; i < this.listOfShapes.length; i++) {
 			var shape = this.listOfShapes[i];
-            if (shape.type != ShapeType.INKLINE) {
+			// check current shape is not selected
+            if (jQuery.inArray(shape, this.selectedShapes) == -1) {
                 shape._draw(this._ctx, this);
             }
 		}
 
-        // draw the selected lines
-        for(var i = 0; i < this.selectedLines.length; i++) {
-            // change canvas drawing colour to highlight colour and reset line property for each line to be drawn
-            this._reset(this.selectedColor);
-			var line = this.selectedLines[i];
-            if (line != null) {
-                for(var j = 0; j < line.points.length; j++) {
-                    var point = line.points[j];
-                    var pointObj = new Point(point.x, point.y, point.time);
-                    this._addPoint(pointObj);    
-                }
-            }
+        // draw the selected shapes
+        for(var i = 0; i < this.selectedShapes.length; i++) {
+			var shape = this.selectedShapes[i];
+            // change shape colour to the highlight colour and draw it
+            shape.colour = this.selectedColor;
+            shape._draw(this._ctx, this);
 		}
 
         // change back to default pen color
         this._ctx.fillStyle = this.penColor;
+    }
+
+    /**
+     * Deselects all shapes.
+     */
+    DrawingPad.prototype.deselectShapes = function (event) {
+        // Change colour of all selected shapes back to their original colours
+        // This will change the same shapes within this.listOfShapes as they are held by reference.
+        for(var i = 0; i < this.selectedShapes.length; i++) {
+            var shape = this.selectedShapes[i];
+            shape.colour = shape.originalColour;            
+        }
+
+        // selectedShapes array can now be safely set to empty
+        this.selectedShapes = [];
+
+        // clear canvas and redraw all shapes
+        this.clear();
+        this.drawShapes();
+    }
+
+    /**
+     * Update position of selected shapes based on distance user has dragged
+     */
+    DrawingPad.prototype.updateSelectedShapePositions = function (event) {
+        var rect = this._canvas.getBoundingClientRect();
+        var newX = event.clientX - rect.left;
+        var newY = event.clientY - rect.top;
+        var diffX = newX - this.oldPos.x;
+        var diffY = newY - this.oldPos.y;
+
+        // update position of selected shapes
+        for (var i = 0; i < this.selectedShapes.length; i++) {
+            var shape = this.selectedShapes[i];
+            if (shape.type != ShapeType.INKLINE) {
+                shape.x += diffX;
+                shape.y += diffY;
+            } else {
+                shape._updatePosition(diffX, diffY);
+            }
+        }
+
+        // update previous touch position
+        this.oldPos.x = newX;
+        this.oldPos.y = newY;
+    }
+
+    /**
+     * Returns the shapes that are unselected
+     */
+    DrawingPad.prototype.getUnselectedShapes = function () {
+        var unselectedShapes = [];
+
+        for (var i = 0; i < this.listOfShapes.length; i++) {
+            var shape = this.listOfShapes[i];
+            // if current shape is not selected, include it in the array to be returned.
+            if (jQuery.inArray(shape, this.selectedShapes) == -1) {
+                unselectedShapes.push(shape);
+            }
+        }
+
+        return unselectedShapes;
+    }
+
+    /**
+     * Compares two arrays for equality. Returns true if they are equal.
+     * Actually works.
+     */
+    Array.prototype.compare = function(testArr) {
+        if (this.length != testArr.length) return false;
+        for (var i = 0; i < testArr.length; i++) {
+            if (this[i].compare) {
+                if (!this[i].compare(testArr[i])) return false;
+            }
+            else if (this[i] !== testArr[i]) return false;
+        }
+        return true;
     }
 
     /**
@@ -572,10 +691,10 @@ var DrawingPad = (function (document) {
     };
 
     Point.prototype.velocityFrom = function (start) {
-        return (this.time !== start.time) ? this.distanceTo(start) / (this.time - start.time) : 1;
+        return (this.time !== start.time) ? this._distanceTo(start) / (this.time - start.time) : 1;
     };
 
-    Point.prototype.distanceTo = function (start) {
+    Point.prototype._distanceTo = function (start) {
         return Math.sqrt(Math.pow(this.x - start.x, 2) + Math.pow(this.y - start.y, 2));
     };
 
@@ -618,14 +737,23 @@ var DrawingPad = (function (document) {
      * Generic Shape class with standard constructor and _draw to be called
      */
     class Shape {
-        constructor(type, colour) {
+        constructor(type, colour, x, y) {
             this.type = type;
             this.colour = colour || '#AAAAAA';
+            // used to revert back to the shape's original colour after it has been deselected.
+            this.originalColour = colour || '#AAAAAA';
+            this.x = null;
+            this.y = null;
         }
 
         _draw(ctx, drawingPad) {
             drawingPad._reset();
             ctx.fillStyle = this.colour;
+        }
+
+        // calculates distance between given start point and the centre of this shape
+        _distanceTo(start) {
+            return Math.sqrt(Math.pow(this.x - start.x, 2) + Math.pow(this.y - start.y, 2));
         }
 
     }
@@ -643,15 +771,16 @@ var DrawingPad = (function (document) {
     /**
      * Represent a line of ink "stroke"
      */
-    class InkLine extends Shape {
+    class InkLine {
         constructor(colour) {
-            super(ShapeType.INKLINE, colour);
+            this.type = ShapeType.INKLINE;
+            this.colour = colour || '#AAAAAA';
             this.points = [];
-
         }
 
         _draw(ctx, drawingPad) {
-            super._draw(ctx, drawingPad);
+            drawingPad._reset();
+            ctx.fillStyle = this.colour;
 
             // adds each individual point to drawing pad 			
 			for(var j = 0; j < this.points.length; j++) {
@@ -664,6 +793,13 @@ var DrawingPad = (function (document) {
             this.points.push(point);
         }
 
+        _updatePosition(diffX, diffY) {
+            for(var j = 0; j < this.points.length; j++) {
+				var point = this.points[j];
+				point.x += diffX;
+                point.y += diffY;
+			}
+        }
     }
 
     /**
