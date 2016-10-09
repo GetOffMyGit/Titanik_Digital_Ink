@@ -243,8 +243,24 @@ var DrawingPad = (function (document) {
         
         if (!this.isDoubleTap) {
             // save to local storage (if user is not selecting but is actually drawing)
-            this.inkLines.push(this.inkLine);
-            this.listOfShapes.push(this.inkLine);
+            if (jQuery.inArray(this.inkLine, this.inkLines) == -1) {
+                this.inkLines.push(this.inkLine);
+            }
+
+            // check that the previously drawn line is not being drawn again
+            var isExistingLine = false;
+            for(var i = 0; i < this.listOfShapes.length; i++) {
+                var shape = this.listOfShapes[i];
+                if (shape.type == ShapeType.INKLINE) {
+                    if (this.inkLine.points.compare(shape.points)) {
+                        isExistingLine = true;
+                    }
+                }
+            }
+            if (!isExistingLine) {
+                console.log("here");
+                this.listOfShapes.push(this.inkLine);
+            }
         } else {
             // reset double tap flag
             this.isDoubleTap = false;
@@ -585,6 +601,21 @@ var DrawingPad = (function (document) {
         }
 
         return unselectedShapes;
+    }
+
+    /**
+     * Compares two arrays for equality. Returns true if they are equal.
+     * Actually works.
+     */
+    Array.prototype.compare = function(testArr) {
+        if (this.length != testArr.length) return false;
+        for (var i = 0; i < testArr.length; i++) {
+            if (this[i].compare) {
+                if (!this[i].compare(testArr[i])) return false;
+            }
+            else if (this[i] !== testArr[i]) return false;
+        }
+        return true;
     }
 
     /**
