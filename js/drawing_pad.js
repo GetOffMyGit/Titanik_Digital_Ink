@@ -459,28 +459,34 @@ var DrawingPad = (function (document) {
         // find the shape which is closest to the touched position
 		for(var i = 0; i < this.listOfShapes.length; i++) {
 			var shape = this.listOfShapes[i];
-            // if current shape is an ink line
-            if (shape.type == ShapeType.INKLINE) {
-                // go through each point of the ink line to determine if this line is closest to touch position
-                for(var j = 0; j < shape.points.length; j++) {
-                    var point = shape.points[j];                
-                    currentDistance = point._distanceTo(touchCoords);
+            // if the current shape is not already selected
+            if (jQuery.inArray(shape, this.selectedShapes) == -1) {
+                // if current shape is an ink line
+                if (shape.type == ShapeType.INKLINE) {
+                    // go through each point of the ink line to determine if this line is closest to touch position
+                    for(var j = 0; j < shape.points.length; j++) {
+                        var point = shape.points[j];                
+                        currentDistance = point._distanceTo(touchCoords);
+                        if (currentDistance < smallestDistance && currentDistance <= this.distanceThreshold) {
+                            closestShape = shape;
+                            smallestDistance = currentDistance;
+                        }
+                    }
+                } else {
+                    // check distance between touch position and centre of shape to determine if closest
+                    currentDistance = shape._distanceTo(touchCoords);
                     if (currentDistance < smallestDistance && currentDistance <= this.distanceThreshold) {
                         closestShape = shape;
                         smallestDistance = currentDistance;
                     }
                 }
-            } else {
-                // check distance between touch position and centre of shape to determine if closest
-                currentDistance = shape._distanceTo(touchCoords);
-                if (currentDistance < smallestDistance && currentDistance <= this.distanceThreshold) {
-                    closestShape = shape;
-                    smallestDistance = currentDistance;
-                }
             }
 		}
+
         // store line as a selected line
-        this.selectedShapes.push(closestShape);
+        if (closestShape != null) {
+            this.selectedShapes.push(closestShape);
+        }
 	};
 
     /**
@@ -499,18 +505,12 @@ var DrawingPad = (function (document) {
             }
 		}
 
-        // draw the selected lines
+        // draw the selected shapes
         for(var i = 0; i < this.selectedShapes.length; i++) {
-            // change canvas drawing colour to highlight colour and reset line property for each line to be drawn
-            this._reset(this.selectedColor);
-			var line = this.selectedShapes[i];
-            if (line != null) {
-                for(var j = 0; j < line.points.length; j++) {
-                    var point = line.points[j];
-                    var pointObj = new Point(point.x, point.y, point.time);
-                    this._addPoint(pointObj);    
-                }
-            }
+			var shape = this.selectedShapes[i];
+            // change shape colour to the highlight colour and draw it
+            shape.colour = this.selectedColor;
+            shape._draw(this._ctx, this);
 		}
 
         // change back to default pen color
