@@ -64,7 +64,7 @@ var DrawingPad = (function (document) {
         this.listOfShapes = [];
         this.drawMode = drawModes.PEN;
         // holds the lines currently selected by the user
-        this.selectedLines = [];
+        this.selectedShapes = [];
         // used to determine if double tap or single tap
         this.touchTimer = null;
 
@@ -117,8 +117,8 @@ var DrawingPad = (function (document) {
                     } else {                
                         // get line selected by user and highlight it
                         var touch = event.targetTouches[0];
-                        self.selectLine(touch);
-                        self.highlightSelectedLines();
+                        self.selectShape(touch);
+                        self.highlightSelectedShapes();
                         // reset touch timer  
                         clearTimeout(context.touchTimer);
                         context.touchTimer = null;
@@ -442,70 +442,68 @@ var DrawingPad = (function (document) {
 	}
 	
     /**
-     * Using touchevent from user, identifies the closest drawn line and stores it as "selected"
+     * Using touchevent from user, identifies the closest drawn shape and stores it as "selected"
      */
-    DrawingPad.prototype.selectLine = function (event) {
+    DrawingPad.prototype.selectShape = function (event) {
         var rect = this._canvas.getBoundingClientRect();
         // get touch coordinates within drawing canvas
         var touchCoords = {
             x : event.clientX - rect.left,
             y : event.clientY - rect.top
         }
-        var closestLine = null;
+        var closestShape = null;
         // unlikely to have a resolution where 900000 is applicable
         var smallestDistance = 900000;
         var currentDistance = null;           
         
-        // find the line which is closest to the touched position
-		for(var i = 0; i < this.inkLines.length; i++) {
-			var line = this.getInkLines()[i];
-			for(var j = 0; j < line.points.length; j++) {
-				var point = line.points[j];                
-				currentDistance = point.distanceTo(touchCoords);
-                if (currentDistance < smallestDistance && currentDistance <= this.distanceThreshold) {
-                    closestLine = line;
-                    smallestDistance = currentDistance;
+        // find the shape which is closest to the touched position
+		for(var i = 0; i < this.listOfShapes.length; i++) {
+			var shape = this.listOfShapes[i];
+            // if current shape is an ink line
+            if (shape.type == ShapeType.INKLINE) {
+                // go through each point of the ink line to determine if this line is closest to touch position
+                for(var j = 0; j < shape.points.length; j++) {
+                    var point = shape.points[j];                
+                    currentDistance = point._distanceTo(touchCoords);
+                    if (currentDistance < smallestDistance && currentDistance <= this.distanceThreshold) {
+                        closestShape = shape;
+                        smallestDistance = currentDistance;
+                    }
                 }
-			}
-		}
-        // store line as a selected line
-        this.selectedLines.push(closestLine);
-	};
-
-    /**
-     * Highlights all lines selected by the user
-     */
-    DrawingPad.prototype.highlightSelectedLines = function (event) {
-        // clear the canvas before drawing
-        this.clear();
-
-        // draw unselected lines first in the default colour
-        for(var i = 0; i < this.inkLines.length; i++) {
-            this._reset();
-			var line = this.getInkLines()[i];
-			// check current line is not selected
-            if (jQuery.inArray(line, this.selectedLines) == -1) {
-                for(var j = 0; j < line.points.length; j++) {
-                    var point = line.points[j];
-                    var pointObj = new Point(point.x, point.y, point.time);
-                    this._addPoint(pointObj);                    
+            } else {
+                // check distance between touch position and centre of shape to determine if closest
+                currentDistance = shape._distanceTo(touchCoords);
+                if (currentDistance < smallestDistance && currentDistance <= this.distanceThreshold) {
+                    closestShape = shape;
+                    smallestDistance = currentDistance;
                 }
             }
 		}
+        // store line as a selected line
+        this.selectedShapes.push(closestShape);
+	};
 
-        // TEMPORARY ; will fix above
+    /**
+     * Highlights all shapes selected by the user
+     */
+    DrawingPad.prototype.highlightSelectedShapes = function (event) {
+        // clear the canvas before drawing
+        this.clear();
+
+        // draw unselected shapes first in the default colour
         for(var i = 0; i < this.listOfShapes.length; i++) {
 			var shape = this.listOfShapes[i];
-            if (shape.type != ShapeType.INKLINE) {
+			// check current shape is not selected
+            if (jQuery.inArray(shape, this.selectedShapes) == -1) {
                 shape._draw(this._ctx, this);
             }
 		}
 
         // draw the selected lines
-        for(var i = 0; i < this.selectedLines.length; i++) {
+        for(var i = 0; i < this.selectedShapes.length; i++) {
             // change canvas drawing colour to highlight colour and reset line property for each line to be drawn
             this._reset(this.selectedColor);
-			var line = this.selectedLines[i];
+			var line = this.selectedShapes[i];
             if (line != null) {
                 for(var j = 0; j < line.points.length; j++) {
                     var point = line.points[j];
@@ -572,10 +570,10 @@ var DrawingPad = (function (document) {
     };
 
     Point.prototype.velocityFrom = function (start) {
-        return (this.time !== start.time) ? this.distanceTo(start) / (this.time - start.time) : 1;
+        return (this.time !== start.time) ? this._distanceTo(start) / (this.time - start.time) : 1;
     };
 
-    Point.prototype.distanceTo = function (start) {
+    Point.prototype._distanceTo = function (start) {
         return Math.sqrt(Math.pow(this.x - start.x, 2) + Math.pow(this.y - start.y, 2));
     };
 
@@ -618,14 +616,21 @@ var DrawingPad = (function (document) {
      * Generic Shape class with standard constructor and _draw to be called
      */
     class Shape {
-        constructor(type, colour) {
+        constructor(type, colour, x, y) {
             this.type = type;
             this.colour = colour || '#AAAAAA';
+            this.x = null;
+            this.y = null;
         }
 
         _draw(ctx, drawingPad) {
             drawingPad._reset();
             ctx.fillStyle = this.colour;
+        }
+
+        // calculates distance between given start point and the centre of this shape
+        _distanceTo(start) {
+            return Math.sqrt(Math.pow(this.x - start.x, 2) + Math.pow(this.y - start.y, 2));
         }
 
     }
@@ -643,15 +648,16 @@ var DrawingPad = (function (document) {
     /**
      * Represent a line of ink "stroke"
      */
-    class InkLine extends Shape {
+    class InkLine {
         constructor(colour) {
-            super(ShapeType.INKLINE, colour);
+            this.type = ShapeType.INKLINE;
+            this.colour = colour || '#AAAAAA';
             this.points = [];
-
         }
 
         _draw(ctx, drawingPad) {
-            super._draw(ctx, drawingPad);
+            drawingPad._reset();
+            ctx.fillStyle = this.colour;
 
             // adds each individual point to drawing pad 			
 			for(var j = 0; j < this.points.length; j++) {
