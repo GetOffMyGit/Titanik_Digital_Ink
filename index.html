@@ -60,11 +60,15 @@
             </div>
           </div>
           <div class="inner cover">
+            <button id="nextButton" class="btn btn-info">Next</button>
           <div class="canvas-wrapper">
             <canvas class="drawing-canvas" id="mainCanvas" width="900" height="975"></canvas>
               <div class="code-wrapper">
+                <div>
+                  <textarea type="text" id="inputField"/></textarea>
+                </div>
                 <pre>
-                  <code>
+                  <code id="codeWrapper">
                     function $initHighlight(block, cls) {
                       try {
                         if (cls.search(/\bno\-highlight\b/) != -1)
@@ -133,6 +137,7 @@
         <script src="./js/drawing_pad.js"></script>
         <script src="./js/script.js"></script>
         <script src="./js/highlightScript.js"></script>
+        <script src="./js/inputScript.js"></script>
         
     </body>
 </html>
