@@ -67,6 +67,12 @@ var DrawingPad = (function (document) {
         this.selectedShapes = [];
         // used to determine if double tap or single tap
         this.touchTimer = null;
+        this.isDoubleTap = false;
+        // used to determine distance user has dragged their finger
+        this.oldPos = {
+            x: null,
+            y: null
+        };
 
         this._canvas = canvas;
         this._ctx = canvas.getContext("2d");
@@ -105,11 +111,14 @@ var DrawingPad = (function (document) {
             // if single finger used in touch
             if (event.targetTouches.length == 1) {
                     var context = this;
+                    // record where user has tapped in case they are dragging selected shapes
+                    var touch = event.changedTouches[0];
+                    self.oldPos.x = touch.clientX - self._canvas.getBoundingClientRect().left;
+                    self.oldPos.y = touch.clientY - self._canvas.getBoundingClientRect().top;
                     // if user does not tap again in timeout time limit then it is a single tap
                     if (this.touchTimer == null) {
                         this.touchTimer = setTimeout(function () {
-                            context.touchTimer = null;
-                            var touch = event.changedTouches[0];
+                            context.touchTimer = null;                            
                             // handle depending on selected mode
                             self._startShapeOrLine(touch);
                         }, 500)
@@ -122,6 +131,8 @@ var DrawingPad = (function (document) {
                         // reset touch timer  
                         clearTimeout(context.touchTimer);
                         context.touchTimer = null;
+                        // signal to touchend that double tap has occurred
+                        self.isDoubleTap = true;
                     }                
             // //}	else if (event.targetTouches.length == 2) {
 			// //	swal("Two fingers detected!")
@@ -137,11 +148,20 @@ var DrawingPad = (function (document) {
                 clearTimeout(this.touchTimer);
                 this.touchTimer = null;
                 // reset drawing pad variables so newly drawn line is NOT continued from previously drawn line
-                self._reset();
+                self._reset();                
             }
             var touch = event.targetTouches[0];
-            // handle depending on selected mode
-            self._updateShapeOrLineOnMove(touch);
+            // check if user has selected shapes, if so, they are now attempting to drag to reposition shapes
+            if (self.selectedShapes[0] != null) {
+                self.updateSelectedShapePositions(touch);
+                // clear canvas and redraw unselected shapes and selected shapes (which have now moved)
+                self.clear();
+                self.drawShapes(self.selectedShapes);
+                self.drawShapes(self.getUnselectedShapes());
+            } else {
+                // handle depending on selected mode
+                self._updateShapeOrLineOnMove(touch);
+            }
         };
 
         this._handleTouchEnd = function (event) {
@@ -220,11 +240,16 @@ var DrawingPad = (function (document) {
     DrawingPad.prototype._strokeEnd = function (event) {
         var canDrawCurve = this.points.length > 2,
             point = this.points[0];
-
-        // save to local storage
-        this.inkLines.push(this.inkLine);
-        this.listOfShapes.push(this.inkLine);
-
+        
+        if (!this.isDoubleTap) {
+            // save to local storage (if user is not selecting but is actually drawing)
+            this.inkLines.push(this.inkLine);
+            this.listOfShapes.push(this.inkLine);
+        } else {
+            // reset double tap flag
+            this.isDoubleTap = false;
+        }
+        
         localStorage.setItem('line', JSON.stringify(this.inkLines));
 
         if (!canDrawCurve && point) {
@@ -431,12 +456,14 @@ var DrawingPad = (function (document) {
 	};
 
     /**
-     * Draw all shapes in listOfShapes to the canvas
+     * Draw all shapes in given array to the canvas. If no array is passed this function will redraw all shapes
      */
-	DrawingPad.prototype.drawShapes = function () {
+	DrawingPad.prototype.drawShapes = function (shapes) {
+        var shapeArray = shapes || this.listOfShapes;
+
         // redraw all shapes again
-		for(var i = 0; i < this.listOfShapes.length; i++) {
-			var shape = this.listOfShapes[i];
+		for(var i = 0; i < shapeArray.length; i++) {
+			var shape = shapeArray[i];
             shape._draw(this._ctx, this);
 		}
 	}
@@ -515,6 +542,49 @@ var DrawingPad = (function (document) {
 
         // change back to default pen color
         this._ctx.fillStyle = this.penColor;
+    }
+
+    /**
+     * Update position of selected shapes based on distance user has dragged
+     */
+    DrawingPad.prototype.updateSelectedShapePositions = function (event) {
+        var rect = this._canvas.getBoundingClientRect();
+        var newX = event.clientX - rect.left;
+        var newY = event.clientY - rect.top;
+        var diffX = newX - this.oldPos.x;
+        var diffY = newY - this.oldPos.y;
+
+        // update position of selected shapes
+        for (var i = 0; i < this.selectedShapes.length; i++) {
+            var shape = this.selectedShapes[i];
+            if (shape.type != ShapeType.INKLINE) {
+                shape.x += diffX;
+                shape.y += diffY;
+            } else {
+                shape._updatePosition(diffX, diffY);
+            }
+        }
+
+        // update previous touch position
+        this.oldPos.x = newX;
+        this.oldPos.y = newY;
+    }
+
+    /**
+     * Returns the shapes that are unselected
+     */
+    DrawingPad.prototype.getUnselectedShapes = function () {
+        var unselectedShapes = [];
+
+        for (var i = 0; i < this.listOfShapes.length; i++) {
+            var shape = this.listOfShapes[i];
+            // if current shape is not selected, include it in the array to be returned.
+            if (jQuery.inArray(shape, this.selectedShapes) == -1) {
+                unselectedShapes.push(shape);
+            }
+        }
+
+        return unselectedShapes;
     }
 
     /**
@@ -670,6 +740,13 @@ var DrawingPad = (function (document) {
             this.points.push(point);
         }
 
+        _updatePosition(diffX, diffY) {
+            for(var j = 0; j < this.points.length; j++) {
+				var point = this.points[j];
+				point.x += diffX;
+                point.y += diffY;
+			}
+        }
     }
 
     /**
