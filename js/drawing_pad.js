@@ -192,6 +192,7 @@ var DrawingPad = (function (document) {
 		this.undoStack = [];
 		this.inkLines = [];
 		this.listOfShapes = [];
+        this.selectedShapes = [];
 	}
 
     DrawingPad.prototype.toDataURL = function (imageType, quality) {
@@ -561,6 +562,25 @@ var DrawingPad = (function (document) {
     }
 
     /**
+     * Deselects all shapes.
+     */
+    DrawingPad.prototype.deselectShapes = function (event) {
+        // Change colour of all selected shapes back to their original colours
+        // This will change the same shapes within this.listOfShapes as they are held by reference.
+        for(var i = 0; i < this.selectedShapes.length; i++) {
+            var shape = this.selectedShapes[i];
+            shape.colour = shape.originalColour;            
+        }
+
+        // selectedShapes array can now be safely set to empty
+        this.selectedShapes = [];
+
+        // clear canvas and redraw all shapes
+        this.clear();
+        this.drawShapes();
+    }
+
+    /**
      * Update position of selected shapes based on distance user has dragged
      */
     DrawingPad.prototype.updateSelectedShapePositions = function (event) {
@@ -720,6 +740,8 @@ var DrawingPad = (function (document) {
         constructor(type, colour, x, y) {
             this.type = type;
             this.colour = colour || '#AAAAAA';
+            // used to revert back to the shape's original colour after it has been deselected.
+            this.originalColour = colour || '#AAAAAA';
             this.x = null;
             this.y = null;
         }
