@@ -56,6 +56,19 @@ $(document).ready(function() {
         var blob = new Blob([json], {type: "application/json"});
         var url  = URL.createObjectURL(blob);
 
+        if (firebase.auth().currentUser == null) {
+            googleSignIn();
+        } else {
+            var projectName = prompt("Please enter the project name.");
+            if(projectName != null) {
+                var codeString = $('#codeBlock').text();
+                alert(codeString);
+                firebase.database().ref('/users/' + firebase.auth().currentUser.uid + '/' + projectName).update({
+                    code: codeString,
+                    drawing: json
+                });
+            }
+        }
         $("#downloadLink").show();
         downloadRef.download = "inks.json";
         downloadRef.href        = url;
@@ -104,4 +117,3 @@ $(document).ready(function() {
         drawingPad.setMode(3);
     });
 });
-

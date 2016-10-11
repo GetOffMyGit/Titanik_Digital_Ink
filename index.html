@@ -7,6 +7,22 @@
         <!--Custom CSS-->
         <link rel="stylesheet" type="text/css" href="./css/cover.css">
         <link rel="stylesheet" type="text/css" href="./css/style.css">
+        <!-- Firebase -->
+        <script src="https://www.gstatic.com/firebasejs/3.4.1/firebase.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/3.4.0/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/3.4.0/firebase-auth.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/3.4.0/firebase-database.js"></script>
+        <script>
+          // Initialize Firebase
+          var config = {
+            apiKey: "AIzaSyCITDeEuIlyjmTHBZ93mLbCwCP2lfAlCeY",
+            authDomain: "titanik-e1f46.firebaseapp.com",
+            databaseURL: "https://titanik-e1f46.firebaseio.com",
+            storageBucket: "titanik-e1f46.appspot.com",
+            messagingSenderId: "991777282099"
+          };
+          firebase.initializeApp(config);
+        </script>
         <!--Highlight JS-->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/default.min.css">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/highlight.min.js"></script>
@@ -30,6 +46,7 @@
                     <div id="content"><a id="downloadLink">Download</a></div>
                   </li>
                   <li class="active"><a href="#">Home</a></li>
+                  <li><button id = "signInButton" class="btn btn-info">Sign In</button> </li>
                   <li><button id = "deselectButton" class="btn btn-info">Deselect all</button> </li>
                   <li><button id = "undoButton" class="btn btn-info">Undo</button> </li>
                   <li><button id = "redoButton" class="btn btn-info">Redo</button> </li>
@@ -65,7 +82,7 @@
             <canvas class="drawing-canvas" id="mainCanvas" width="900" height="975"></canvas>
               <div class="code-wrapper">
                 <pre>
-                  <code>
+                  <code id="codeBlock">
                     function $initHighlight(block, cls) {
                       try {
                         if (cls.search(/\bno\-highlight\b/) != -1)
@@ -131,6 +148,7 @@
         <script src="./node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
         <!--Custom Scripts-->
         
+        <script src="./js/fireBaseScript.js"></script>
         <script src="./js/drawing_pad.js"></script>
         <script src="./js/script.js"></script>
         <script src="./js/highlightScript.js"></script>
