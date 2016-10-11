@@ -107,11 +107,11 @@ $(document).ready(function() {
     });
 
     increaseSizeButton.addEventListener("click", function () {
-        drawingPad.resizeSelectedShapes(10);
+        drawingPad.btnResizeSelectedShapes(10);
     });
 
     decreaseSizeButton.addEventListener("click", function () {
-        drawingPad.resizeSelectedShapes(-10);
+        drawingPad.btnResizeSelectedShapes(-10);
     });
 });
 

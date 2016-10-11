@@ -74,6 +74,17 @@ var DrawingPad = (function (document) {
             y: null
         };
 
+        this.twoTouchPos = {
+            A: {
+            x: null,
+            y: null
+            },
+            B:  {
+            x: null,
+            y: null
+            }
+        };
+
         this._canvas = canvas;
         this._ctx = canvas.getContext("2d");
         this.clear();
@@ -134,14 +145,24 @@ var DrawingPad = (function (document) {
                         // signal to touchend that double tap has occurred
                         self.isDoubleTap = true;
                     }                
-            // //}	else if (event.targetTouches.length == 2) {
-			// //	swal("Two fingers detected!")
-			 }
+            }  else if (event.targetTouches.length == 2) {
+                self._twoTouch = true;
+                
+                // record where user has tapped in case they are resizing selected shapes
+                var touch = event.changedTouches[0];
+                self.twoTouchPos.one.x = touch.clientX - self._canvas.getBoundingClientRect().left;
+                self.twoTouchPos.one.y = touch.clientY - self._canvas.getBoundingClientRect().top;
+				
+                var secondTouch = event.changedTouches[1];
+                self.twoTouchPos.two.x = touch.clientX - self._canvas.getBoundingClientRect().left;
+                self.twoTouchPos.two.y = touch.clientY - self._canvas.getBoundingClientRect().top;
+			}
         };
 
         this._handleTouchMove = function (event) {
             // Prevent scrolling.
             event.preventDefault();
+
             // if user is dragging their finger, check if they are drawing (single tap)
             if (this.touchTimer != null) {
                 // if they are drawing after a single tap, kill the timeout callback so another stroke is not drawn
@@ -153,7 +174,12 @@ var DrawingPad = (function (document) {
             var touch = event.targetTouches[0];
             // check if user has selected shapes, if so, they are now attempting to drag to reposition shapes
             if (self.selectedShapes[0] != null) {
-                self.updateSelectedShapePositions(touch);
+                if (self._twoTouch) {
+                // resize shapes if multi touch is on
+                self._resizeSelectedShapes(event);
+                }  else {
+                    self.updateSelectedShapePositions(touch);
+                }
                 // clear canvas and redraw unselected shapes and selected shapes (which have now moved)
                 self.clear();
                 self.drawShapes(self.selectedShapes);
@@ -162,9 +188,11 @@ var DrawingPad = (function (document) {
                 // handle depending on selected mode
                 self._updateShapeOrLineOnMove(touch);
             }
+            
         };
 
         this._handleTouchEnd = function (event) {
+            self._twoTouch = false;
             var wasCanvasTouched = event.target === self._canvas;
             if (wasCanvasTouched) {
                 event.preventDefault();
@@ -177,6 +205,8 @@ var DrawingPad = (function (document) {
         this._handleMouseEvents();
         this._handleTouchEvents();
     };
+
+    
 
     DrawingPad.prototype.clear = function () {
         var ctx = this._ctx,
@@ -217,6 +247,7 @@ var DrawingPad = (function (document) {
 
     DrawingPad.prototype._strokeUpdate = function (event) {
         var point = this._createPoint(event);
+        console.log(point);
         this._addPoint(point);
     };
 
@@ -682,24 +713,77 @@ var DrawingPad = (function (document) {
         this.drawMode = drawModeNum;
     };
 
+
     /**
      * Increase size
      */
-    DrawingPad.prototype.resizeSelectedShapes = function (value) {
+    DrawingPad.prototype._resizeSelectedShapes = function (event) {
+        var touch_A = event.touches[0];
+        var touch_B = event.touches[1];
+
+
+        // var rect = this._canvas.getBoundingClientRect();
+
+        // var newX_A = touch_A.clientX - rect.left;
+        // var newY_A = touch_A.clientY - rect.top;
+        // var diffX_A = newX - this.twoTouchPos.A.x;
+        // var diffY_A = newY - this.twoTouchPos.A.y;
+
+        // var newX_B = touch_B.clientX - rect.left;
+        // var newY_B = touch_B.clientY - rect.top;
+        // var diffX_B = newX - this.twoTouchPos.B.x;
+        // var diffY_B = newY - this.twoTouchPos.B.y;
+
+        // var deltaX = Maths.abs(newX_B - newX_A);
+        // var deltaY = Maths.abs(newY_B - newX_A);
+        // var theta = Math.atan2(dy, dx) * (180 / Math.PI); // rads to degs, range (-180, 180)
+
+        // determine direction to increase or decrease - looking at old and new delta
+        var theta = 40;
+        var value = 10;
+
+        
+        // loop through selected list and increase size
+        for (var i = 0; i < this.selectedShapes.length; i++) {
+            var shape = this.selectedShapes[i];
+            
+            if (shape.type == ShapeType.SQUARE || shape.type == ShapeType.TRIANGLE) {
+                if (theta <= 45) {
+                    // need to set limit
+                    // vertical
+                    shape._resize(0, value);
+                } else {
+                    // horizontal
+                    shape._resize(value, 0);
+
+                }
+                // diagonal 
+                // shape.resize(value, value);
+            } else if (shape.type == ShapeType.CIRCLE){
+                shape._resize(value, value);
+            }
+        }
+
+        // update previous touch position
+        // this.twoTouchPos.A.x = newX_A;
+        // this.twoTouchPos.A.y = newY_A;
+        // this.twoTouchPos.B.x = newX_B;
+        // this.twoTouchPos.B.y = newY_B;
+    }
+
+    /**
+     * Increase size
+     */
+    DrawingPad.prototype.btnResizeSelectedShapes = function (value) {
 
         // loop through selected list and increase size
         for (var i = 0; i < this.selectedShapes.length; i++) {
             var shape = this.selectedShapes[i];
             
             if (shape.type == ShapeType.SQUARE || shape.type == ShapeType.TRIANGLE) {
-                if (shape.h + value >= 10 && shape.w + value >= 10) {  
-                    shape.h += value;
-                    shape.w += value;
-                }
+                shape._resize(value, value);
             } else if (shape.type == ShapeType.CIRCLE){
-                if (shape.radius + value >= 10 ) {  
-                    shape.radius += value;
-                }
+                shape._resize(value, value);
             }
         }
 
@@ -845,6 +929,15 @@ var DrawingPad = (function (document) {
             super._draw(ctx, drawingPad);
             ctx.fillRect(this.x - this.w/2, this.y - this.h/2, this.w, this.h);
         }
+
+        _resize(deltaW, deltaH) {
+            if (this.w + deltaW >= 10) {  
+                this.w += deltaW;
+            }
+            if (this.h + deltaH >= 10) {  
+                this.h += deltaH;
+            }
+        }
     }
 
     /**
@@ -885,6 +978,15 @@ var DrawingPad = (function (document) {
 
             // fills in the path to create  a filled circle
             ctx.fill();
+        }
+
+        _resize(deltaW, deltaH) {
+            if (this.radius + deltaW >= 10) {  
+                this.radius += deltaW;
+            }
+            // if (this.h + deltaH >= 10) {  
+            //     this.h += deltaH;
+            // }
         }
         
     }
@@ -931,6 +1033,15 @@ var DrawingPad = (function (document) {
             // ctx.lineTo(this.x - this.w, this.y);
             ctx.closePath();
             ctx.fill();
+        }
+
+        _resize(deltaW, deltaH) {
+            if (this.w + deltaW >= 10) {  
+                this.w += deltaW;
+            }
+            if (this.h + deltaH >= 10) {  
+                this.h += deltaH;
+            }
         }
     }
 
