@@ -35,7 +35,7 @@
 var DrawingPad = (function (document) {
     "use strict";
 
-    const drawModes = {
+    var drawModes = {
         PEN: 0,
         CIRCLE: 1,
         SQUARE: 2,
@@ -641,33 +641,31 @@ var DrawingPad = (function (document) {
     /**
      * Draw a shape based on its json values passed in
      */
-	DrawingPad.prototype.drawFromJson = function (jsonShape) {
+    DrawingPad.prototype.drawFromJson = function (jsonShape) {
+        // reset shape property
         this._reset();
         
         var shape;
 
-        switch (jsonShape.type) {
-            case ShapeType.INKLINE:
-                shape = new InkLine('green');
-                // iterate through each point
-                for(var i = 0; i < jsonShape.points.length; i++) {
-                        var jsonPoint = jsonShape.points[i];
+        var shapeType = jsonShape.type;
 
-                        // create javaObject point from json values
-                        var point = new Point(jsonPoint.x, jsonPoint.y, jsonPoint.time);
-                        
-                        shape._addPointToLine(point);
-                }
-                break;
-            case ShapeType.SQUARE:
-                shape = new Square (jsonShape.x, jsonShape.y, jsonShape.w, jsonShape.h, jsonShape.colour);
-                break;
-            case ShapeType.CIRCLE:
-                shape = new Circle (jsonShape.x, jsonShape.y, jsonShape.radius, jsonShape.colour);
-                break;
-            case ShapeType.TRIANGLE:
-                shape = new Triangle (jsonShape.x, jsonShape.y, jsonShape.w, jsonShape.h, jsonShape.colour);
-                break;
+        if (shapeType == ShapeType.INKLINE) {
+            shape = new InkLine('green');
+            // iterate through each point
+            for(var i = 0; i < jsonShape.points.length; i++) {
+                    var jsonPoint = jsonShape.points[i];
+
+                    // create javaObject point from json values
+                    var point = new Point(jsonPoint.x, jsonPoint.y, jsonPoint.time);
+                    
+                    shape._addPointToLine(point);
+            }
+        } else if (shapeType == ShapeType.SQUARE) {
+            shape = new Square (jsonShape.x, jsonShape.y, jsonShape.w, jsonShape.h, jsonShape.colour);
+        } else if (shapeType == ShapeType.CIRCLE) {
+            shape = new Circle (jsonShape.x, jsonShape.y, jsonShape.radius, jsonShape.colour);
+        } else if (shapeType == ShapeType.TRIANGLE) {
+            shape = new Triangle (jsonShape.x, jsonShape.y, jsonShape.w, jsonShape.h, jsonShape.colour);
         }
 
         // redraw shape
@@ -761,7 +759,7 @@ var DrawingPad = (function (document) {
     /**
      * Identifies the shape
      */
-    const ShapeType = {
+    var ShapeType = {
         INKLINE: 'INKLINE',
         CIRCLE:'CIRCLE',
         SQUARE: 'SQUARE',
@@ -927,40 +925,29 @@ var DrawingPad = (function (document) {
     };
 
     DrawingPad.prototype._startShapeOrLine = function(event) {
-        switch (this.drawMode) {
-            case drawModes.PEN:
-                this._strokeBegin(event);
-                break;
-            case drawModes.CIRCLE:
-                this._createCircle(event);
-                break;
-            case drawModes.SQUARE:
-                this._createSquare(event);
-                break;
-            case drawModes.TRIANGLE:
-                this._createTriangle(event);
-            default:
-                   //
-        }
+        console.log("hello");
+
+        if (this.drawMode == drawModes.PEN) {
+            this._strokeBegin(event);
+        } else if (this.drawMode == drawModes.CIRCLE) {
+            this._createCircle(event);
+        } 
+        else if (this.drawMode == drawModes.SQUARE) {
+             this._createSquare(event);
+         } else if (this.drawMode == drawModes.TRIANGLE) {
+             this._createTriangle(event);
+         }
     };
 
     DrawingPad.prototype._updateShapeOrLineOnMove = function(event) {
-        switch (this.drawMode) {
-            case drawModes.PEN:
-                this._strokeUpdate(event);
-                break;
-            default:
-                   //
+        if (this.drawMode == drawModes.PEN) {
+            this._strokeUpdate(event);
         }
     };
 
-    DrawingPad.prototype._endShaopeOrLine = function(event) {
-        switch (this.drawMode) {
-            case drawModes.PEN:
-                this._strokeEnd(event);
-                break;
-            default:
-                   //
+    DrawingPad.prototype._endShapeOrLine = function(event) {
+        if (this.drawMode == drawModes.PEN) {
+            this._strokeEnd(event);
         }
     };
 
