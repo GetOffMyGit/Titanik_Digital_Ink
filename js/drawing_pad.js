@@ -102,7 +102,7 @@ var DrawingPad = (function (document) {
                 self._mouseButtonDown = false;
 
                 // handle depending on selected mode
-                self._endShaopeOrLine(event);
+                self._endShapeOrLine(event);
             }
         };
 
@@ -170,7 +170,7 @@ var DrawingPad = (function (document) {
                 event.preventDefault();
 
                 // handle depending on selected mode
-                self._endShaopeOrLine(event);
+                self._endShapeOrLine(event);
             }
         };
 
