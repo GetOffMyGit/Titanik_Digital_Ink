@@ -682,6 +682,32 @@ var DrawingPad = (function (document) {
         this.drawMode = drawModeNum;
     };
 
+    /**
+     * Increase size
+     */
+    DrawingPad.prototype.resizeSelectedShapes = function (value) {
+
+        // loop through selected list and increase size
+        for (var i = 0; i < this.selectedShapes.length; i++) {
+            var shape = this.selectedShapes[i];
+            
+            if (shape.type == ShapeType.SQUARE || shape.type == ShapeType.TRIANGLE) {
+                if (shape.h + value >= 10 && shape.w + value >= 10) {  
+                    shape.h += value;
+                    shape.w += value;
+                }
+            } else if (shape.type == ShapeType.CIRCLE){
+                if (shape.radius + value >= 10 ) {  
+                    shape.radius += value;
+                }
+            }
+        }
+
+        this.clear();
+        this.drawShapes(this.selectedShapes);
+        this.drawShapes(this.getUnselectedShapes());
+    }
+
     var Point = function (x, y, time) {
         this.x = x;
         this.y = y;
@@ -817,7 +843,7 @@ var DrawingPad = (function (document) {
 
         _draw(ctx, drawingPad) {
             super._draw(ctx, drawingPad);
-            ctx.fillRect(this.x, this.y, this.w, this.h);
+            ctx.fillRect(this.x - this.w/2, this.y - this.h/2, this.w, this.h);
         }
     }
 

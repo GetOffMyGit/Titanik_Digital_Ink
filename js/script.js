@@ -18,6 +18,8 @@ $(document).ready(function() {
     var circleShapeButton = $("#circleShapeButton")[0];
     var squareShapeButton = $("#squareShapeButton")[0];
     var triangleShapeButton = $("#triangleShapeButton")[0];
+    var increaseSizeButton = $("#increaseSizeButton")[0];
+    var decreaseSizeButton = $("#decreaseSizeButton")[0];
 
     $("#downloadLink").hide();
 	
@@ -102,6 +104,14 @@ $(document).ready(function() {
 
     triangleShapeButton.addEventListener("click", function () {
         drawingPad.setMode(3);
+    });
+
+    increaseSizeButton.addEventListener("click", function () {
+        drawingPad.resizeSelectedShapes(10);
+    });
+
+    decreaseSizeButton.addEventListener("click", function () {
+        drawingPad.resizeSelectedShapes(-10);
     });
 });
 
