@@ -11,6 +11,7 @@
   overflow-y: scroll;
   padding-top: 10px;
   position: relative;
+  top: 60px
 }
 
 #mainCanvas {
