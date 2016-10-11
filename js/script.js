@@ -62,7 +62,6 @@ $(document).ready(function() {
             var projectName = prompt("Please enter the project name.");
             if(projectName != null) {
                 var codeString = $('#codeBlock').text();
-                alert(codeString);
                 firebase.database().ref('/users/' + firebase.auth().currentUser.uid + '/' + projectName).update({
                     code: codeString,
                     drawing: json
@@ -80,18 +79,36 @@ $(document).ready(function() {
 
         // no input while loading ink
         drawingPad.off();
-        $.getJSON("inks.json", function(json) {
-            // iterate through all the lines
-            for(var i = 0; i < json.length; i++) {
-                var line = json[i];
-
-                // draw the line given by points
-                drawingPad.drawFromJson(line);
+        if (firebase.auth().currentUser == null) {
+            googleSignIn();
+        } else {
+            var projectName = prompt("Please enter the project name.");
+            if(projectName != null) {
+                firebase.database().ref('/users/' + firebase.auth().currentUser.uid + '/' + projectName).once('value').then(function(snapshot) {
+                    $('#codeBlock').text(snapshot.val().code);
+                    var drawingJson = JSON.parse(snapshot.val().drawing);
+                    $('pre code').each(function(i, block) {
+                        hljs.highlightBlock(block);
+                    });
+                    for(var i = 0; i < drawingJson.length; i++) {
+                        drawingPad.drawFromJson(drawingJson[i]);
+                    }
+                });
             }
+        }
+        drawingPad.on();
+        // $.getJSON("inks.json", function(json) {
+        //     // iterate through all the lines
+        //     for(var i = 0; i < json.length; i++) {
+        //         var line = json[i];
 
-            // allow ink after input done
-            drawingPad.on();
-        });
+        //         // draw the line given by points
+        //         drawingPad.drawFromJson(line);
+        //     }
+
+        //     // allow ink after input done
+        //     drawingPad.on();
+        // });
     });
 
     
