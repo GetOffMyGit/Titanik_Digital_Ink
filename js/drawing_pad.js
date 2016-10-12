@@ -749,25 +749,28 @@ var DrawingPad = (function (document) {
         var theta = Math.atan2(distance.deltaY, distance.deltaX) * (180 / Math.PI); //(y, x) // rads to degs, range (-180, 180)
         // range (0, 90) --> because we give in absolute delta values (positives)
 
-        // determine direction to increase or decrease - looking at old and new delta
-        var value = 10;
-        var min = 10;
-        var maxH = this._canvas.height * 0.8;
-        var maxW = this._canvas.width * 0.8;
-
         // loop through selected list and increase size
         for (var i = 0; i < this.selectedShapes.length; i++) {
             var shape = this.selectedShapes[i];
+            var value = 10;
+            var min = 20;
+            var maxH = this._canvas.height * 0.8;
+            var maxW = this._canvas.width * 0.8;
             
             // special case for triangle to make it not as small
             if (shape.type == ShapeType.TRIANGLE) {
                 min = 40;
+            } else if (shape.type == ShapeType.CIRCLE) {
+                // adjust max values to half (radius)
+                maxW = maxW / 2;
+                maxH = maxH / 2;
             }
 
-            if (shape.type == ShapeType.SQUARE || shape.type == ShapeType.TRIANGLE) {
+            if (shape.type != ShapeType.INKLINE) {
                 // touch points are horizontally aligned (0 - 20)
                 if (theta <= 20) {
-                    // decrease distance between prior touch points --> decrease size
+
+                    // when there is a decrease in distance between prior touch points --> decrease size
                     if (distance.deltaX < this.twoTouchDistanceX) {
                         value = -value;
                     }
@@ -776,49 +779,28 @@ var DrawingPad = (function (document) {
 
                 // touch points are diagonally  aligned  (21 -70) 
                 } else if (theta > 20 && theta <= 70) {
+
+                    // when there is a decrease in distance between prior touch points --> decrease size
                     if (distance.deltaX < this.twoTouchDistanceX || distance.deltaY < this.twoTouchDistanceY) {
                         value = -value;
                     }
                     shape._resize(value, value, min, maxW, maxH);
                 // touch points are vertically aligned (71 - 90)
                 } else {
-                    // decrease distance between prior touch points --> decrease size
+
+                    // when there is a decrease in distance between prior touch points --> decrease size
                     if (distance.deltaY < this.twoTouchDistanceY) {
                         value = -value;
                     }
                     // vertical resize in height
                     shape._resize(0, value, min, maxW, maxH);
                 }
-                // diagonal 
-            } else if (shape.type == ShapeType.CIRCLE){
-                shape._resize(value, value, min, maxW, maxH);
-            }
+            } 
         }
 
         // update previous touch distance difference
         this.twoTouchDistanceX = distance.deltaX;
         this.twoTouchDistanceY = distance.deltaY;
-    }
-
-    /**
-     * Increase size
-     */
-    DrawingPad.prototype.btnResizeSelectedShapes = function (value) {
-
-        // loop through selected list and increase size
-        for (var i = 0; i < this.selectedShapes.length; i++) {
-            var shape = this.selectedShapes[i];
-            
-            if (shape.type == ShapeType.SQUARE || shape.type == ShapeType.TRIANGLE) {
-                shape._resize(value, value);
-            } else if (shape.type == ShapeType.CIRCLE){
-                shape._resize(value, value);
-            }
-        }
-
-        this.clear();
-        this.drawShapes(this.selectedShapes);
-        this.drawShapes(this.getUnselectedShapes());
     }
 
     var Point = function (x, y, time) {
@@ -874,13 +856,15 @@ var DrawingPad = (function (document) {
      * Generic Shape class with standard constructor and _draw to be called
      */
     class Shape {
-        constructor(type, colour, x, y) {
+        constructor(type, colour, x, y, w, h) {
             this.type = type;
             this.colour = colour || '#AAAAAA';
             // used to revert back to the shape's original colour after it has been deselected.
             this.originalColour = colour || '#AAAAAA';
-            this.x = null;
-            this.y = null;
+            this.x = x || 0;
+            this.y = y || 0;
+            this.w = w || 1;
+            this.h = h || 1;
         }
 
         _draw(ctx, drawingPad) {
@@ -891,6 +875,17 @@ var DrawingPad = (function (document) {
         // calculates distance between given start point and the centre of this shape
         _distanceTo(start) {
             return Math.sqrt(Math.pow(this.x - start.x, 2) + Math.pow(this.y - start.y, 2));
+        }
+
+        // resize the shape by x amount
+        _resize(deltaW, deltaH, min, maxW, maxH) {
+            // ensure it remains in minimum and maximum range
+            if (this.w + deltaW >= min && this.w + deltaW <= maxW) { 
+                this.w += deltaW;
+            }
+            if (this.h + deltaH >= min && this.h + deltaH <= maxH) {  
+                this.h += deltaH;
+            }
         }
 
     }
@@ -944,29 +939,13 @@ var DrawingPad = (function (document) {
      * Represent a square/rectangle object
      */
     class Square extends Shape {
-        // This is a very simple and unsafe constructor.
-        // All we're doing is checking if the values exist.
-        // "x || 0" just means "if there is a value for x, use that. Otherwise use 0."
         constructor (x, y, w, h, colour) {
-            super(ShapeType.SQUARE, colour);
-            this.x = x || 0;
-            this.y = y || 0;
-            this.w = w || 1;
-            this.h = h || 1;
+            super(ShapeType.SQUARE, colour, x, y, w, h);
         }
 
         _draw(ctx, drawingPad) {
             super._draw(ctx, drawingPad);
             ctx.fillRect(this.x - this.w/2, this.y - this.h/2, this.w, this.h);
-        }
-
-        _resize(deltaW, deltaH, min, maxW, maxH) {
-             if (this.w + deltaW >= min && this.w + deltaW <= maxW) { 
-                this.w += deltaW;
-            }
-            if (this.h + deltaH >= min && this.h + deltaH <= maxH) {  
-                this.h += deltaH;
-            }
         }
     }
 
@@ -975,9 +954,8 @@ var DrawingPad = (function (document) {
      */
     DrawingPad.prototype._createSquare = function (e) {
         var color,
-            radius = 20,
-            width = 20,
-            height = 20;
+            width = 40,
+            height = 40;
 
         var centerPoint = this._createPoint(e);
 
@@ -991,34 +969,21 @@ var DrawingPad = (function (document) {
      * Represent a circle object
      */
     class Circle extends Shape {
-        constructor (x, y, radius, colour) {
-            super(ShapeType.CIRCLE, colour);
-            this.x = x || 0;
-            this.y = y || 0;
-            this.radius = radius || MIN_CIRCLE_RADIUS;
+        constructor (x, y, w, h, colour) {
+            super(ShapeType.CIRCLE, colour, x, y, w, h);
         }
 
         _draw(ctx, drawingPad) {
             super._draw(ctx, drawingPad);
             ctx.beginPath();
 
-            // draws an arc that is 360 --> circle
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
+            // draw an ellipse
+            ctx.ellipse(this.x, this.y, this.w, this.h, 0, 0, Math.PI*2);
             ctx.closePath();
 
             // fills in the path to create  a filled circle
             ctx.fill();
         }
-
-        _resize(deltaW, deltaH, min, maxW, maxH) {
-            if (this.radius + deltaW >= min && this.radius + deltaW <= maxW/2) {  
-                this.radius += deltaW;
-            }
-            // if (this.h + deltaH >= 10) {  
-            //     this.h += deltaH;
-            // }
-        }
-        
     }
 
     /**
@@ -1030,7 +995,7 @@ var DrawingPad = (function (document) {
 
         var centerPoint = this._createPoint(e);
 
-        var circle = new Circle (centerPoint.x, centerPoint.y, radius, color);
+        var circle = new Circle (centerPoint.x, centerPoint.y, radius, radius, color);
         this.listOfShapes.push(circle);
 
         circle._draw(this._ctx, this);
@@ -1041,11 +1006,7 @@ var DrawingPad = (function (document) {
      */
     class Triangle extends Shape {
         constructor (x, y, w, h, colour) {
-            super(ShapeType.TRIANGLE, colour);
-            this.x = x || 0;
-            this.y = y || 0;
-            this.w = w || 1;
-            this.h = h || 1;
+            super(ShapeType.TRIANGLE, colour, x, y, w, h);
         }
 
         _draw(ctx, drawingPad) {
@@ -1057,21 +1018,8 @@ var DrawingPad = (function (document) {
             ctx.lineTo(this.x, this.y - (this.h/2));
             ctx.lineTo(this.x - (this.w/2),  this.y + (this.h/2));
 
-            // triangle created at right corner
-            // ctx.moveTo(this.x, this.y);
-            // ctx.lineTo(this.x - (this.w/2), this.y - (this.h));
-            // ctx.lineTo(this.x - this.w, this.y);
             ctx.closePath();
             ctx.fill();
-        }
-
-        _resize(deltaW, deltaH, min, maxW, maxH) {
-             if (this.w + deltaW >= min && this.w + deltaW <= maxW) { 
-                this.w += deltaW;
-            }
-            if (this.h + deltaH >= min && this.h + deltaH <= maxH) {  
-                this.h += deltaH;
-            }
         }
     }
 
