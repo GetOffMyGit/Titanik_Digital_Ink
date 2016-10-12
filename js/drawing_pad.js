@@ -85,6 +85,9 @@ var DrawingPad = (function (document) {
             }
         };
 
+        this.twoTouchDistanceX = 0;
+        this.twoTouchDistanceY = 0;
+
         this._canvas = canvas;
         this._ctx = canvas.getContext("2d");
         this.clear();
@@ -146,16 +149,15 @@ var DrawingPad = (function (document) {
                         self.isDoubleTap = true;
                     }                
             }  else if (event.targetTouches.length == 2) {
+                // indicate the canvas is in two touch mode
                 self._twoTouch = true;
                 
-                // record where user has tapped in case they are resizing selected shapes
-                var touch = event.changedTouches[0];
-                self.twoTouchPos.A.x = touch.clientX - self._canvas.getBoundingClientRect().left;
-                self.twoTouchPos.A.y = touch.clientY - self._canvas.getBoundingClientRect().top;
-				
-                var secondTouch = event.changedTouches[1];
-                self.twoTouchPos.B.x = touch.clientX - self._canvas.getBoundingClientRect().left;
-                self.twoTouchPos.B.y = touch.clientY - self._canvas.getBoundingClientRect().top;
+                // grab absolute distance between points in deltaX and deltaY form
+                var distance = self._absDistanceBetweenTwoTouch(event);
+
+                // record initial distance
+                self.twoTouchDistanceX = distance.deltaX;
+                self.twoTouchDistanceY = distance.deltaY;
 			}
         };
 
@@ -172,14 +174,18 @@ var DrawingPad = (function (document) {
                 self._reset();                
             }
             var touch = event.targetTouches[0];
-            // check if user has selected shapes, if so, they are now attempting to drag to reposition shapes
+            // check if user has selected shapes, if so, they are now attempting to drag to reposition shapes or resizing shapes
             if (self.selectedShapes[0] != null) {
+
+                // if the canvas is in tow touch modde
                 if (self._twoTouch) {
                     // resize shapes if multi touch is on
                     self._resizeSelectedShapes(event);
                 }  else {
+                    // update shapes position due to drag touch
                     self.updateSelectedShapePositions(touch);
                 }
+
                 // clear canvas and redraw unselected shapes and selected shapes (which have now moved)
                 self.clear();
                 self.drawShapes(self.selectedShapes);
@@ -247,7 +253,6 @@ var DrawingPad = (function (document) {
 
     DrawingPad.prototype._strokeUpdate = function (event) {
         var point = this._createPoint(event);
-        console.log(point);
         this._addPoint(point);
     };
 
@@ -290,7 +295,6 @@ var DrawingPad = (function (document) {
                 }
             }
             if (!isExistingLine) {
-                console.log("here");
                 this.listOfShapes.push(this.inkLine);
             }
         } else {
@@ -713,30 +717,37 @@ var DrawingPad = (function (document) {
         this.drawMode = drawModeNum;
     };
 
-
     /**
-     * Increase size
+     * Returns the absolute distance between two touch points in deltaX and deltaY form 
      */
-    DrawingPad.prototype._resizeSelectedShapes = function (event) {
+    DrawingPad.prototype._absDistanceBetweenTwoTouch = function(event) {
         var touch_A = event.touches[0];
         var touch_B = event.touches[1];
 
-
         var rect = this._canvas.getBoundingClientRect();
-
         var newX_A = touch_A.clientX - rect.left;
         var newY_A = touch_A.clientY - rect.top;
-        var diffX_A = newX_A - this.twoTouchPos.A.x;
-        var diffY_A = newY_A - this.twoTouchPos.A.y;
 
         var newX_B = touch_B.clientX - rect.left;
         var newY_B = touch_B.clientY - rect.top;
-        var diffX_B = newX_B - this.twoTouchPos.B.x;
-        var diffY_B = newY_B - this.twoTouchPos.B.y;
 
-        var deltaX = Math.abs(newX_B - newX_A);
-        var deltaY = Math.abs(newY_B - newY_A);
-        var theta = Math.atan2(deltaY, deltaX) * (180 / Math.PI); //(y, x) // rads to degs, range (-180, 180)
+        return {
+            deltaX : Math.abs(newX_B - newX_A),
+            deltaY : Math.abs(newY_B - newY_A)
+        }
+    }
+
+
+    /**
+     * Increase size based on two touch 
+     */
+    DrawingPad.prototype._resizeSelectedShapes = function (event) {
+        // grab absolute distance between points in deltaX and deltaY form
+        var distance = this._absDistanceBetweenTwoTouch(event);
+
+        // get theta angle between the distance between each point 
+        var theta = Math.atan2(distance.deltaY, distance.deltaX) * (180 / Math.PI); //(y, x) // rads to degs, range (-180, 180)
+        // range (0, 90) --> because we give in absolute delta values (positives)
 
         // determine direction to increase or decrease - looking at old and new delta
         var value = 10;
@@ -748,26 +759,45 @@ var DrawingPad = (function (document) {
         for (var i = 0; i < this.selectedShapes.length; i++) {
             var shape = this.selectedShapes[i];
             
+            // special case for triangle to make it not as small
+            if (shape.type == ShapeType.TRIANGLE) {
+                min = 40;
+            }
+
             if (shape.type == ShapeType.SQUARE || shape.type == ShapeType.TRIANGLE) {
-                if (theta <= 45) {
-                    // horizontal resize (width, height)
+                // touch points are horizontally aligned (0 - 20)
+                if (theta <= 20) {
+                    // decrease distance between prior touch points --> decrease size
+                    if (distance.deltaX < this.twoTouchDistanceX) {
+                        value = -value;
+                    }
+                    // horizontal resize (width, height) in width
                     shape._resize(value, 0, min, maxW, maxH);
+
+                // touch points are diagonally  aligned  (21 -70) 
+                } else if (theta > 20 && theta <= 70) {
+                    if (distance.deltaX < this.twoTouchDistanceX || distance.deltaY < this.twoTouchDistanceY) {
+                        value = -value;
+                    }
+                    shape._resize(value, value, min, maxW, maxH);
+                // touch points are vertically aligned (71 - 90)
                 } else {
-                    // vertical
+                    // decrease distance between prior touch points --> decrease size
+                    if (distance.deltaY < this.twoTouchDistanceY) {
+                        value = -value;
+                    }
+                    // vertical resize in height
                     shape._resize(0, value, min, maxW, maxH);
                 }
                 // diagonal 
-                // shape.resize(value, value);
             } else if (shape.type == ShapeType.CIRCLE){
                 shape._resize(value, value, min, maxW, maxH);
             }
         }
 
-        // update previous touch position
-        this.twoTouchPos.A.x = newX_A;
-        this.twoTouchPos.A.y = newY_A;
-        this.twoTouchPos.B.x = newX_B;
-        this.twoTouchPos.B.y = newY_B;
+        // update previous touch distance difference
+        this.twoTouchDistanceX = distance.deltaX;
+        this.twoTouchDistanceY = distance.deltaY;
     }
 
     /**
@@ -1051,8 +1081,8 @@ var DrawingPad = (function (document) {
     DrawingPad.prototype._createTriangle = function (e) {
         var color,
             radius = 20,
-            width = 20,
-            height = 20;
+            width = 40,
+            height = 40;
 
         var centerPoint = this._createPoint(e);
         var triangle = new Triangle (centerPoint.x, centerPoint.y, width, height, color);
@@ -1062,7 +1092,6 @@ var DrawingPad = (function (document) {
     };
 
     DrawingPad.prototype._startShapeOrLine = function(event) {
-        console.log("hello");
 
         if (this.drawMode == drawModes.PEN) {
             this._strokeBegin(event);
