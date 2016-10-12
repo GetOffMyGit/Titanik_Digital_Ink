@@ -74,17 +74,6 @@ var DrawingPad = (function (document) {
             y: null
         };
 
-        this.twoTouchPos = {
-            A: {
-                x: null,
-                y: null
-            },
-            B:  {
-                x: null,
-                y: null
-            }
-        };
-
         this.twoTouchDistanceX = 0;
         this.twoTouchDistanceY = 0;
 
@@ -177,7 +166,7 @@ var DrawingPad = (function (document) {
             // check if user has selected shapes, if so, they are now attempting to drag to reposition shapes or resizing shapes
             if (self.selectedShapes[0] != null) {
 
-                // if the canvas is in tow touch modde
+                // if the canvas is in two touch modde
                 if (self._twoTouch) {
                     // resize shapes if multi touch is on
                     self._resizeSelectedShapes(event);
@@ -698,7 +687,7 @@ var DrawingPad = (function (document) {
         } else if (shapeType == ShapeType.SQUARE) {
             shape = new Square (jsonShape.x, jsonShape.y, jsonShape.w, jsonShape.h, jsonShape.colour);
         } else if (shapeType == ShapeType.CIRCLE) {
-            shape = new Circle (jsonShape.x, jsonShape.y, jsonShape.radius, jsonShape.colour);
+            shape = new Circle (jsonShape.x, jsonShape.y, jsonShape.w, jsonShape.h, jsonShape.colour);
         } else if (shapeType == ShapeType.TRIANGLE) {
             shape = new Triangle (jsonShape.x, jsonShape.y, jsonShape.w, jsonShape.h, jsonShape.colour);
         }
