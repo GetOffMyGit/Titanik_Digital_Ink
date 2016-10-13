@@ -24,7 +24,7 @@
 
 .code-wrapper {
     z-index: 0;
-    width: 100%;
+    width: 900px;
     position: absolute;
     left: 0px;
     top: 0px;
@@ -36,6 +36,35 @@
     -ms-user-select: none;
     user-select: none;
 }
+
+#codeWrapper {
+    visibility: hidden;
+    width: 900px;
+    height: 975px;
+}
+
+#mainCanvas {
+    visibility: hidden;
+}
+
+#inputField {
+    width: 900px;
+    height: 975px;
+    color: black;
+    resize: none;
+    left: 0px;
+    top: 0px;
+    position: absolute;
+    z-index: 2;
+}
+
+#nextButton {
+    left: 850px;
+    top: 835px;
+    position: absolute;
+    z-index: 3;
+}
+
 
 #signInButton {
     visibility: hidden;
