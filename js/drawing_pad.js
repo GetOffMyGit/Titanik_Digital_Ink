@@ -111,14 +111,16 @@ var DrawingPad = (function (document) {
         };
 
         this._handleTouchStart = function (event) {
-
             var copiedShapes;
             
+            // copy shapes so that it does not act as a direct reference
             if (self.selectedShapes.length > 0) {
+                // (since we just using it to grab fields this is fine to do it this way)
                 copiedShapes = JSON.parse(JSON.stringify(self.selectedShapes));
             }
             // if single finger used in touch
             if (event.targetTouches.length == 1) {
+                    // create new transform record incase of drag
                     self._transformRecord = new TransformRecord(copiedShapes, self.selectedShapes); 
 
                     var context = this;
@@ -146,6 +148,7 @@ var DrawingPad = (function (document) {
                         self.isDoubleTap = true;
                     }                
             }  else if (event.targetTouches.length == 2) {
+                // create new transform record incase of resizing
                 self._transformRecord = new TransformRecord(copiedShapes, self.selectedShapes); 
 
                 // indicate the canvas is in two touch mode
@@ -190,8 +193,10 @@ var DrawingPad = (function (document) {
                 self.drawShapes(self.selectedShapes);
                 self.drawShapes(self.getUnselectedShapes());
 
-                var copiedShapes = jQuery.extend({}, self.selectedShapes);
-            
+                // copy shapes so that it does not act as a direct reference
+                // (since we just using it to grab fields this is fine to do it this way)
+                var copiedShapes = JSON.parse(JSON.stringify(self.selectedShapes));
+
                 // update transform record
                 self._transformRecord._setTransformedShapes(copiedShapes);
             } else {
@@ -202,10 +207,13 @@ var DrawingPad = (function (document) {
         };
 
         this._handleTouchEnd = function (event) {
-            //
+            // transform happened and hasnt been saved
             if (!self._transformRecord.recorded && self._transformRecord.transformed) {
                 self._transformRecord.recorded = true;
+
+                // add it to the list of shapes
                 self.listOfShapes.push(self._transformRecord);
+                self.undoStack = [];
             }
 
             self._twoTouch = false;
@@ -306,6 +314,7 @@ var DrawingPad = (function (document) {
             }
             if (!isExistingLine) {
                 this.listOfShapes.push(this.inkLine);
+                this.undoStack = [];
             }
         } else {
             // reset double tap flag
@@ -499,6 +508,9 @@ var DrawingPad = (function (document) {
         return this.listOfShapes;
     };
 	
+    /**
+     *  Undo last action
+     */
 	DrawingPad.prototype.undo = function () {
 		if (this.listOfShapes.length != 0) {
             var lastShape = this.listOfShapes.pop();
@@ -512,6 +524,7 @@ var DrawingPad = (function (document) {
                 this.selectedShapes.splice(selectedPos, 1);
             }
 			
+            // transform record --> change back to how they were originally
             if (lastShape.type == ShapeType.TRANSFORMRECORD) {
                 this.transformShapes(lastShape, lastShape.originalShapesArray);
             }
@@ -520,10 +533,19 @@ var DrawingPad = (function (document) {
 		}
 	};
 	
+    /**
+     *  Redo last undo-ed action
+     */
 	DrawingPad.prototype.redo = function () {
 		if (this.undoStack.length != 0) {
-			this.listOfShapes.push(this.undoStack.pop());
+            var lastShape = this.undoStack.pop();
+			this.listOfShapes.push(lastShape);
 			this.clear();
+
+            // transform record --> change back to how they were transformed
+            if (lastShape.type == ShapeType.TRANSFORMRECORD) {
+                this.transformShapes(lastShape, lastShape.transformedArray);
+            }
 			
 			this.drawShapes();
 		}
@@ -755,6 +777,7 @@ var DrawingPad = (function (document) {
 
         // add to existing shapes
         this.listOfShapes.push(shape);
+        this.undoStack = [];
     };
 
     /**
@@ -935,6 +958,7 @@ var DrawingPad = (function (document) {
             }
         }
 
+        // transform the shape to the desired shape properties
         _transformTo(shapeToTransform) {
             this.x = shapeToTransform.x;
             this.y = shapeToTransform.y;
@@ -988,6 +1012,7 @@ var DrawingPad = (function (document) {
 			}
         }
 
+        // transform the shape to the desired shape properties
         _transformTo(shapeToTransform) {
             for(var j = 0; j < this.points.length; j++) {
 				var point = this.points[j];
@@ -1023,8 +1048,9 @@ var DrawingPad = (function (document) {
 
         var centerPoint = this._createPoint(e);
 
-        var square = new Square (centerPoint.x - width/2, centerPoint.y - height/2, width, height, this.colourSelect);
+        var square = new Square (centerPoint.x, centerPoint.y, width, height, this.colourSelect);
         this.listOfShapes.push(square);
+        this.undoStack = [];
 
         square._draw(this._ctx, this);
     };
@@ -1061,6 +1087,7 @@ var DrawingPad = (function (document) {
 
         var circle = new Circle (centerPoint.x, centerPoint.y, radius, radius, this.colourSelect);
         this.listOfShapes.push(circle);
+        this.undoStack = [];
 
         circle._draw(this._ctx, this);
     };
@@ -1087,6 +1114,26 @@ var DrawingPad = (function (document) {
         }
     }
 
+    /**
+     *  Creates a triangle where specified
+     */
+    DrawingPad.prototype._createTriangle = function (e) {
+        var color,
+            radius = 20,
+            width = 40,
+            height = 40;
+
+        var centerPoint = this._createPoint(e);
+        var triangle = new Triangle (centerPoint.x, centerPoint.y, width, height, this.colourSelect);
+        this.listOfShapes.push(triangle);
+        this.undoStack = [];
+
+        triangle._draw(this._ctx, this);
+    };
+
+    /**
+     * Represent a transform record object for resizing and repositioning
+     */
     class TransformRecord {
         constructor (originalShapesArray, referenceArray) {
             this.type = ShapeType.TRANSFORMRECORD;
@@ -1095,7 +1142,6 @@ var DrawingPad = (function (document) {
             this.transformedArray = originalShapesArray;
             this.recorded = false;
             this.transformed = false;
-
         }
 
         _setTransformedShapes(transformedArray) {
@@ -1110,21 +1156,8 @@ var DrawingPad = (function (document) {
     }
 
     /**
-     *  Creates a triangle where specified
+     * Start an action of drawing based on selected draw mode
      */
-    DrawingPad.prototype._createTriangle = function (e) {
-        var color,
-            radius = 20,
-            width = 40,
-            height = 40;
-
-        var centerPoint = this._createPoint(e);
-        var triangle = new Triangle (centerPoint.x, centerPoint.y, width, height, this.colourSelect);
-        this.listOfShapes.push(triangle);
-
-        triangle._draw(this._ctx, this);
-    };
-
     DrawingPad.prototype._startShapeOrLine = function(event) {
 
         if (this.drawMode == drawModes.PEN) {
@@ -1139,12 +1172,18 @@ var DrawingPad = (function (document) {
          }
     };
 
+    /**
+     * Update an action of drawing based on selected draw mode
+     */
     DrawingPad.prototype._updateShapeOrLineOnMove = function(event) {
         if (this.drawMode == drawModes.PEN) {
             this._strokeUpdate(event);
         }
     };
 
+    /**
+     * End an action of drawing based on selected draw mode
+     */
     DrawingPad.prototype._endShapeOrLine = function(event) {
         if (this.drawMode == drawModes.PEN) {
             this._strokeEnd(event);
