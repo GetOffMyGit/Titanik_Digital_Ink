@@ -69,3 +69,7 @@
 #signInButton {
     visibility: hidden;
 }
+
+input {
+    color: black;
+}
