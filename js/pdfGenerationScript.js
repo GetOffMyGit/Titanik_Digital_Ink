@@ -1,21 +1,38 @@
-$(document).ready(function() {
+$(document).ready(function () {
     var cacheHeight = $('#canvasWrapper').height();
     var pdfCanvas = $('#codeBlock');
 
     var pdfSize = [700, pdfCanvas.height() + 50];
 
-    $('#pdfButton').click(function() {
-        alert(pdfCanvas.width());
-        $('#canvasWrapper').height(pdfCanvas.height() + 50);
-        html2canvas($('#canvasWrapper'), {
-            onrendered: function(canvas) {
-                var img = canvas.toDataURL("image/JPEG");
-                var pdf = new jsPDF('l', 'pt', pdfSize);
-                pdf.addImage(img, 'JPEG', 20, 20);
-                pdf.save("testingPDF");
-                $('#canvasWrapper').height(cacheHeight);
-            }
-        });
+    $('#pdfButton').click(function () {
+        swal({
+            title: "PDF Name",
+            text: "Please specify a name for the PDF.",
+            type: "input",
+            showCancelButton: true,
+            closeOnConfirm: true,
+            animation: "slide-from-top",
+            inputPlaceholder: "PDF Name"
+        },
+            function (pdfName) {
+                if (pdfName === false) {
+                    return false;
+                }
+                if (pdfName === "") {
+                    swal.showInputError("Please specify a name for the PDF.");
+                    return false;
+                }
+                $('#canvasWrapper').height(pdfCanvas.height() + 50);
+                html2canvas($('#canvasWrapper'), {
+                    onrendered: function (canvas) {
+                        var img = canvas.toDataURL("image/JPEG");
+                        var pdf = new jsPDF('l', 'pt', pdfSize);
+                        pdf.addImage(img, 'JPEG', 20, 20);
+                        pdf.save(pdfName + ".pdf");
+                        $('#canvasWrapper').height(cacheHeight);
+                    }
+                });
+            });
         // pdf.addHTML($('#drawing-canvas')[0], function() {
         //     pdf.save("testingPDF");
         // });
@@ -45,14 +62,14 @@ $(document).ready(function() {
     //         //form.width(cache_width);
     //     });
     // }
-    
+
     // function getCanvas() {
     //     return html2canvas(form, {
     //         imageTimeout:2000,
     //         removeContainer:true
     //     });
     // }
-    
+
     // var specialElementsHandlers = {
     //     '#editor' : function(element, renderer) {
     //         return true;

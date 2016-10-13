@@ -21,10 +21,20 @@ $(document).ready(function () {
 
     $("#downloadLink").hide();
 
+    // simpleColorPicker functions
+    $('select[name="colorPicker"]').on('change', function () {
+        drawingPad.setColour($('select[name="colorPicker"]').val());
+    });
+    $('select[name="colorPickerBackground"]').on('change', function () {
+        $(document.body).css('background-color', $('select[name="colorPickerBackground"]').val());
+    });
+    $('select[name="colorPicker"]').simplecolorpicker({ picker: true, theme: 'glyphicons' });
+    $('select[name="colorPickerBackground"]').simplecolorpicker();
+
+    // button functions
     deselectButton.addEventListener("click", function () {
         drawingPad.deselectShapes();
     });
-
     undoButton.addEventListener("click", function () {
         drawingPad.undo();
     });
@@ -45,17 +55,19 @@ $(document).ready(function () {
         }, function () {
             drawingPad.clear();
             drawingPad.clearStack();
-            swal("Cleared!", "Your drawing pad has been reset.", "success");
+            swal("Cleared!",
+                "Your drawing pad has been reset.",
+                "success");
         });
     });
 
     saveButton.addEventListener("click", function () {
         var inkLines = drawingPad.getListOfShapes();
-
         var json = JSON.stringify(inkLines);
-        var blob = new Blob([json], { type: "application/json" });
+        var blob = new Blob([json], {
+            type: "application/json"
+        });
         var url = URL.createObjectURL(blob);
-
         if (firebase.auth().currentUser == null) {
             googleSignIn();
         } else {
@@ -68,32 +80,30 @@ $(document).ready(function () {
                 animation: "slide-from-top",
                 inputPlaceholder: "Project Name"
             },
-            function(projectName) {
-                if(projectName === false) {
-                    return false;
-                }
-                if(projectName === "") {
-                    swal.showInputError("Please specify a project name.");
-                    return false;
-                }
-                var codeString = $('#codeBlock').text();
-                firebase.database().ref('/users/' + firebase.auth().currentUser.uid + '/' + projectName).update({
-                    code: codeString,
-                    drawing: json
-                }).then(function() {
-                    swal("Project " + projectName + " successfully saved.");
+                function (projectName) {
+                    if (projectName === false) {
+                        return false;
+                    }
+                    if (projectName === "") {
+                        swal.showInputError("Please specify a project name.");
+                        return false;
+                    }
+                    var codeString = $('#codeBlock').text();
+                    firebase.database().ref('/users/' + firebase.auth().currentUser.uid + '/' + projectName).update({
+                        code: codeString,
+                        drawing: json
+                    }).then(function () {
+                        swal("Project " + projectName + " successfully saved.");
+                    });
                 });
-            });
         }
         $("#downloadLink").show();
         downloadRef.download = "inks.json";
         downloadRef.href = url;
         downloadRef.textContent = "Download inks.json";
     });
-
     loadButton.addEventListener("click", function () {
         //TODO: load from external chosen file
-
         // no input while loading ink
         drawingPad.off();
         if (firebase.auth().currentUser == null) {
@@ -132,19 +142,15 @@ $(document).ready(function () {
         $(".draw-tool").removeClass("active");
         $(this).addClass("active");
     });
-
     penButton.addEventListener("click", function () {
         drawingPad.setMode(0);
     });
-
     circleShapeButton.addEventListener("click", function () {
         drawingPad.setMode(1);
     });
-
     squareShapeButton.addEventListener("click", function () {
         drawingPad.setMode(2);
     });
-
     triangleShapeButton.addEventListener("click", function () {
         drawingPad.setMode(3);
     });
