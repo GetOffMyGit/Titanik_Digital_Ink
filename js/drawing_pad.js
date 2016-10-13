@@ -122,7 +122,8 @@ var DrawingPad = (function (document) {
             if (event.targetTouches.length == 1) {
                     // create new transform record incase of drag
                     self._transformRecord = new TransformRecord(copiedShapes, self.selectedShapes); 
-
+                    
+                    self.onHoldShape = true;
                     var context = this;
                     // record where user has tapped in case they are dragging selected shapes
                     var touch = event.changedTouches[0];
@@ -1170,7 +1171,49 @@ var DrawingPad = (function (document) {
          } else if (this.drawMode == drawModes.TRIANGLE) {
              this._createTriangle(event);
          }
+
+         if (this.drawMode != drawModes.PEN) {
+            // increase shape over time
+            this.increaseShapeTimeOut();
+         }
     };
+
+    /**
+     * Increase shape based on long hold - increase every 50 milisecond
+     */
+    DrawingPad.prototype.increaseShapeTimeOut = function ()
+    {
+        var shape = this.listOfShapes[this.listOfShapes.length -1];
+        // from resizeSelectedShapes function
+        var value = 10;
+        var min = 20;
+        var maxH = this._canvas.height * 0.8;
+        var maxW = this._canvas.width * 0.8;
+
+        // special case for triangle to make it not as small
+        if (shape.type == ShapeType.TRIANGLE) {
+            min = 40;
+        } else if (shape.type == ShapeType.CIRCLE) {
+            // adjust max values to half (radius)
+            maxW = maxW / 2;
+            maxH = maxH / 2;
+        }
+        
+        shape._resize(value, value, min, maxW, maxH);
+        // clear canvas and redraw unselected shapes and selected shapes (which have now moved)
+        this.clear();
+        this.drawShapes(this.selectedShapes);
+        this.drawShapes(this.getUnselectedShapes());
+        
+
+        // only increase if user still holding down
+        if (this.onHoldShape) {
+            var self = this;
+            // call this function 50 milliseconds later
+            setTimeout(function() { self.increaseShapeTimeOut(); }, 50);
+        }
+       
+    }
 
     /**
      * Update an action of drawing based on selected draw mode
@@ -1187,6 +1230,9 @@ var DrawingPad = (function (document) {
     DrawingPad.prototype._endShapeOrLine = function(event) {
         if (this.drawMode == drawModes.PEN) {
             this._strokeEnd(event);
+        } else {
+            // stop resizing shape
+            this.onHoldShape = false;
         }
     };
 	
