@@ -63,6 +63,7 @@ var DrawingPad = (function (document) {
 		this.undoStack = [];
         this.listOfShapes = [];
         this.drawMode = drawModes.PEN;
+		this.colourSelect = '#7bd148';
         // holds the lines currently selected by the user
         this.selectedShapes = [];
         // used to determine if double tap or single tap
@@ -340,14 +341,14 @@ var DrawingPad = (function (document) {
 
     DrawingPad.prototype._reset = function (lineColor) {
         // if different colour passed for line, use that instead of default pen color
-        var colorToUse = lineColor || this.penColor;
+        var colorToUse = lineColor || this.colourSelect;
 
         this.points = [];
         this._lastVelocity = 0;
         this._lastWidth = (this.minWidth + this.maxWidth) / 2;
         this._isEmpty = true;
         this._ctx.fillStyle = colorToUse;
-        this.inkLine = new InkLine(this.penColor);
+        this.inkLine = new InkLine(this.colourSelect);
     };
 
     DrawingPad.prototype._createPoint = function (event) {
@@ -948,7 +949,7 @@ var DrawingPad = (function (document) {
 
         var centerPoint = this._createPoint(e);
 
-        var square = new Square (centerPoint.x - width/2, centerPoint.y - height/2, width, height, color);
+        var square = new Square (centerPoint.x - width/2, centerPoint.y - height/2, width, height, this.colourSelect);
         this.listOfShapes.push(square);
 
         square._draw(this._ctx, this);
@@ -984,7 +985,7 @@ var DrawingPad = (function (document) {
 
         var centerPoint = this._createPoint(e);
 
-        var circle = new Circle (centerPoint.x, centerPoint.y, radius, radius, color);
+        var circle = new Circle (centerPoint.x, centerPoint.y, radius, radius, this.colourSelect);
         this.listOfShapes.push(circle);
 
         circle._draw(this._ctx, this);
@@ -1022,7 +1023,7 @@ var DrawingPad = (function (document) {
             height = 40;
 
         var centerPoint = this._createPoint(e);
-        var triangle = new Triangle (centerPoint.x, centerPoint.y, width, height, color);
+        var triangle = new Triangle (centerPoint.x, centerPoint.y, width, height, this.colourSelect);
         this.listOfShapes.push(triangle);
 
         triangle._draw(this._ctx, this);
@@ -1053,6 +1054,11 @@ var DrawingPad = (function (document) {
             this._strokeEnd(event);
         }
     };
+	
+	DrawingPad.prototype.setColour = function(colourHex) {
+		 this.colourSelect = colourHex;
+	};
+	
 
     return DrawingPad;
 })(document);
