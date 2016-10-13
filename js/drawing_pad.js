@@ -111,9 +111,16 @@ var DrawingPad = (function (document) {
         };
 
         this._handleTouchStart = function (event) {
-             
+
+            var copiedShapes;
+            
+            if (self.selectedShapes.length > 0) {
+                copiedShapes = JSON.parse(JSON.stringify(self.selectedShapes));
+            }
             // if single finger used in touch
             if (event.targetTouches.length == 1) {
+                    self._transformRecord = new TransformRecord(copiedShapes, self.selectedShapes); 
+
                     var context = this;
                     // record where user has tapped in case they are dragging selected shapes
                     var touch = event.changedTouches[0];
@@ -139,6 +146,8 @@ var DrawingPad = (function (document) {
                         self.isDoubleTap = true;
                     }                
             }  else if (event.targetTouches.length == 2) {
+                self._transformRecord = new TransformRecord(copiedShapes, self.selectedShapes); 
+
                 // indicate the canvas is in two touch mode
                 self._twoTouch = true;
                 
@@ -149,6 +158,7 @@ var DrawingPad = (function (document) {
                 self.twoTouchDistanceX = distance.deltaX;
                 self.twoTouchDistanceY = distance.deltaY;
 			}
+
         };
 
         this._handleTouchMove = function (event) {
@@ -166,7 +176,6 @@ var DrawingPad = (function (document) {
             var touch = event.targetTouches[0];
             // check if user has selected shapes, if so, they are now attempting to drag to reposition shapes or resizing shapes
             if (self.selectedShapes[0] != null) {
-
                 // if the canvas is in two touch modde
                 if (self._twoTouch) {
                     // resize shapes if multi touch is on
@@ -180,6 +189,11 @@ var DrawingPad = (function (document) {
                 self.clear();
                 self.drawShapes(self.selectedShapes);
                 self.drawShapes(self.getUnselectedShapes());
+
+                var copiedShapes = jQuery.extend({}, self.selectedShapes);
+            
+                // update transform record
+                self._transformRecord._setTransformedShapes(copiedShapes);
             } else {
                 // handle depending on selected mode
                 self._updateShapeOrLineOnMove(touch);
@@ -188,6 +202,12 @@ var DrawingPad = (function (document) {
         };
 
         this._handleTouchEnd = function (event) {
+            //
+            if (!self._transformRecord.recorded && self._transformRecord.transformed) {
+                self._transformRecord.recorded = true;
+                self.listOfShapes.push(self._transformRecord);
+            }
+
             self._twoTouch = false;
             var wasCanvasTouched = event.target === self._canvas;
             if (wasCanvasTouched) {
@@ -481,9 +501,21 @@ var DrawingPad = (function (document) {
 	
 	DrawingPad.prototype.undo = function () {
 		if (this.listOfShapes.length != 0) {
-			this.undoStack.push(this.listOfShapes.pop());
+            var lastShape = this.listOfShapes.pop();
+			this.undoStack.push(lastShape);
 			this.clear();
+
+            var selectedPos = jQuery.inArray(lastShape, this.selectedShapes);
+            // safety reasons get rid of the shape if selected
+            if (selectedPos > -1) {
+                // remove shape
+                this.selectedShapes.splice(selectedPos, 1);
+            }
 			
+            if (lastShape.type == ShapeType.TRANSFORMRECORD) {
+                this.transformShapes(lastShape, lastShape.originalShapesArray);
+            }
+
 			this.drawShapes();
 		}
 	};
@@ -497,6 +529,27 @@ var DrawingPad = (function (document) {
 		}
 	};
 
+
+    /**
+     *  Transform shapes from a transform Record
+     */
+    DrawingPad.prototype.transformShapes = function (transformRecord, toTransformArray) {
+        for(var i = 0; i < this.listOfShapes.length; i++) {
+            var currentShape = this.listOfShapes[i];
+            // check if shape was transformed and if so grab position
+            var shapePos = jQuery.inArray(currentShape, transformRecord.referenceArray);
+            
+            // shape was transformed in this transformRecord (as value is not -1)
+            if (shapePos != -1) {
+
+                // transform back to original
+                var original = toTransformArray[shapePos];
+                currentShape._transformTo(original);
+            }
+        }
+
+	};
+
     /**
      * Draw all shapes in given array to the canvas. If no array is passed this function will redraw all shapes
      */
@@ -506,7 +559,9 @@ var DrawingPad = (function (document) {
         // redraw all shapes again
 		for(var i = 0; i < shapeArray.length; i++) {
 			var shape = shapeArray[i];
-            shape._draw(this._ctx, this);
+            // if (shape.type != ShapeType.TRANSFORMRECORD) {
+                shape._draw(this._ctx, this);
+            //}
 		}
 	}
 	
@@ -528,25 +583,27 @@ var DrawingPad = (function (document) {
         // find the shape which is closest to the touched position
 		for(var i = 0; i < this.listOfShapes.length; i++) {
 			var shape = this.listOfShapes[i];
-            // if the current shape is not already selected
-            if (jQuery.inArray(shape, this.selectedShapes) == -1) {
-                // if current shape is an ink line
-                if (shape.type == ShapeType.INKLINE) {
-                    // go through each point of the ink line to determine if this line is closest to touch position
-                    for(var j = 0; j < shape.points.length; j++) {
-                        var point = shape.points[j];                
-                        currentDistance = point._distanceTo(touchCoords);
+            if (shape.type != ShapeType.TRANSFORMRECORD) {
+                // if the current shape is not already selected
+                if (jQuery.inArray(shape, this.selectedShapes) == -1) {
+                    // if current shape is an ink line
+                    if (shape.type == ShapeType.INKLINE) {
+                        // go through each point of the ink line to determine if this line is closest to touch position
+                        for(var j = 0; j < shape.points.length; j++) {
+                            var point = shape.points[j];                
+                            currentDistance = point._distanceTo(touchCoords);
+                            if (currentDistance < smallestDistance && currentDistance <= this.distanceThreshold) {
+                                closestShape = shape;
+                                smallestDistance = currentDistance;
+                            }
+                        }
+                    } else {
+                        // check distance between touch position and centre of shape to determine if closest
+                        currentDistance = shape._distanceTo(touchCoords);
                         if (currentDistance < smallestDistance && currentDistance <= this.distanceThreshold) {
                             closestShape = shape;
                             smallestDistance = currentDistance;
                         }
-                    }
-                } else {
-                    // check distance between touch position and centre of shape to determine if closest
-                    currentDistance = shape._distanceTo(touchCoords);
-                    if (currentDistance < smallestDistance && currentDistance <= this.distanceThreshold) {
-                        closestShape = shape;
-                        smallestDistance = currentDistance;
                     }
                 }
             }
@@ -878,6 +935,13 @@ var DrawingPad = (function (document) {
             }
         }
 
+        _transformTo(shapeToTransform) {
+            this.x = shapeToTransform.x;
+            this.y = shapeToTransform.y;
+            this.w = shapeToTransform.w;
+            this.h = shapeToTransform.h;
+        }
+
     }
 
     /**
@@ -887,7 +951,8 @@ var DrawingPad = (function (document) {
         INKLINE: 'INKLINE',
         CIRCLE:'CIRCLE',
         SQUARE: 'SQUARE',
-        TRIANGLE: 'TRIANGLE'
+        TRIANGLE: 'TRIANGLE',
+        TRANSFORMRECORD: 'TRANSFORMRECORD'
     };
 
     /**
@@ -920,6 +985,15 @@ var DrawingPad = (function (document) {
 				var point = this.points[j];
 				point.x += diffX;
                 point.y += diffY;
+			}
+        }
+
+        _transformTo(shapeToTransform) {
+            for(var j = 0; j < this.points.length; j++) {
+				var point = this.points[j];
+                var deltaPoint = shapeToTransform.points[j];
+				point.x = deltaPoint.x;
+                point.y = deltaPoint.y;
 			}
         }
     }
@@ -1011,6 +1085,28 @@ var DrawingPad = (function (document) {
             ctx.closePath();
             ctx.fill();
         }
+    }
+
+    class TransformRecord {
+        constructor (originalShapesArray, referenceArray) {
+            this.type = ShapeType.TRANSFORMRECORD;
+            this.originalShapesArray = originalShapesArray;
+            this.referenceArray = referenceArray;
+            this.transformedArray = originalShapesArray;
+            this.recorded = false;
+            this.transformed = false;
+
+        }
+
+        _setTransformedShapes(transformedArray) {
+            this.transformed = true;
+            this.transformedArray = transformedArray;
+        }
+
+        _draw(ctx, drawingPad) {
+            // do nothing
+        }
+
     }
 
     /**
