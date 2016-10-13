@@ -1,10 +1,12 @@
 $(document).ready(function () {
-    var cacheHeight = $('#canvasWrapper').height();
-    var pdfCanvas = $('#codeBlock');
-
-    var pdfSize = [700, pdfCanvas.height() + 50];
-
     $('#pdfButton').click(function () {
+        var cacheHeight = $('#canvasWrapper').height();
+        var pdfCanvas = $('#codeBlock');
+        var pdfHeight = pdfCanvas.height() + 100;
+
+        var pdfPtHeight = pdfHeight * 0.75;
+
+        var pdfSize = [pdfPtHeight, 700];
         swal({
             title: "PDF Name",
             text: "Please specify a name for the PDF.",
@@ -22,11 +24,17 @@ $(document).ready(function () {
                     swal.showInputError("Please specify a name for the PDF.");
                     return false;
                 }
-                $('#canvasWrapper').height(pdfCanvas.height() + 50);
+                $('#canvasWrapper').height(pdfHeight);
+                var orientation = "";
+                if(pdfCanvas.height() > pdfCanvas.width()) {
+                    orientation = "p";
+                } else {
+                    orientation = "l"
+                }
                 html2canvas($('#canvasWrapper'), {
                     onrendered: function (canvas) {
                         var img = canvas.toDataURL("image/JPEG");
-                        var pdf = new jsPDF('l', 'pt', pdfSize);
+                        var pdf = new jsPDF(orientation, 'pt', pdfSize);
                         pdf.addImage(img, 'JPEG', 20, 20);
                         pdf.save(pdfName + ".pdf");
                         $('#canvasWrapper').height(cacheHeight);
