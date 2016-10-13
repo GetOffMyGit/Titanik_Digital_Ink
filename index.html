@@ -1,139 +1,157 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Titanik</title>
-        <!--Boostrap's CSS-->
-        <link rel="stylesheet" type="text/css" href="./node_modules/bootstrap/dist/css/bootstrap.min.css">
-        <!--Custom CSS-->
-        <link rel="stylesheet" type="text/css" href="./css/cover.css">
-        <link rel="stylesheet" type="text/css" href="./css/style.css">
-        <!--Highlight JS-->
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/default.min.css">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/highlight.min.js"></script>
-		<script src="dist/sweetalert.min.js"></script>
-		<link rel="stylesheet" type="text/css" href="dist/sweetalert.css">
-    </head>
+<head>
+    <title>Titanik Digital Ink</title>
+	<!--Bootstrap CSS-->
+    <link href="./node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+	<!--Custom CSS-->
+    <link href="./css/cover.css" rel="stylesheet" type="text/css">
+    <link href="./css/style.css" rel="stylesheet" type="text/css">
+    <!--Highlight JS-->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/default.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/highlight.min.js"></script>
+	<!--jQuery Script-->
+    <script src="./node_modules/jquery/dist/jquery.min.js"></script>
+	<!--Bootstrap Script-->
+	<script src="./node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+	<!--SweetAlert-->
+	<link href="dist/sweetalert.css" rel="stylesheet" type="text/css">
+	<script src="dist/sweetalert.min.js"></script>
+	<!--ColorPicker-->
+	<link href="./css/simpleColorPicker.css" rel="stylesheet">
+	<link href="./css/simpleColorPicker-glyphicons.css" rel="stylesheet">
+	<script src="./js/simpleColorPicker.js"></script>
+	<!--Custom Scripts-->
+	<script src="./js/drawing_pad.js"></script>
+    <script src="./js/script.js"></script>
+    <script src="./js/highlightScript.js"></script>
+</head>
+
 <body>
-
     <div class="site-wrapper">
-
-      <div class="site-wrapper-inner">
-
-        <div class="cover-container">
-
-          <div class="masthead clearfix">
-            <div class="inner">
-              <h3 class="masthead-brand">Cover</h3>
-              <nav>
-                <ul class="nav masthead-nav">
-                                    <li>
-                    <div id="content"><a id="downloadLink">Download</a></div>
-                  </li>
-                  <li class="active"><a href="#">Home</a></li>
-                  <li><button id = "deselectButton" class="btn btn-info">Deselect all</button> </li>
-                  <li><button id = "undoButton" class="btn btn-info">Undo</button> </li>
-                  <li><button id = "redoButton" class="btn btn-info">Redo</button> </li>
-                  <li><button id = "clearButton" class="btn btn-warning">Clear</button> </li>
-                  <li><button id = "saveButton" class="btn btn-info">
-                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span> 
-                    Save</button> </li>
-                  <li><button id = "loadButton" class="btn btn-primary">
-                    <span class="glyphicon glyphicon-upload" aria-hidden="true"></span> 
-                    Load</button> </li>
-                    <li>
-                    <div class="btn-group" role="group" aria-label="...">
-                      <button type="button"  id = "penButton" class="btn btn-default draw-tool active">
-                          <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span> 
-                      </button> 
-                      <button type="button"  id = "circleShapeButton" class="btn btn-default draw-tool">
-                          <span class="glyphicon glyphicon-adjust" aria-hidden="true"></span> 
-                      </button> 
-                      <button type="button"  id = "squareShapeButton" class="btn btn-default draw-tool">
-                          <span class="glyphicon glyphicon-stop" aria-hidden="true"></span> 
-                      </button> 
-                      <button type="button"  id = "triangleShapeButton" class="btn btn-default draw-tool">
-                          <span class="glyphicon glyphicon-triangle-top" aria-hidden="true"></span> 
-                      </button> 
+        <div class="site-wrapper-inner">
+            <div class="cover-container">
+                <div class="masthead clearfix">
+                    <div class="inner">
+                        <h3 class="masthead-brand">Cover</h3>
+                        <nav>
+                            <ul class="nav masthead-nav">
+                                <li>
+                                    <div id="content">
+                                        <a id="downloadLink">Download</a>
+                                    </div>
+                                </li>
+                                <li class="active">
+                                    <a href="#">Home</a>
+                                </li>
+                                <li><button class="btn btn-info" id="deselectButton">Deselect all</button></li>
+								<li><button class="btn btn-info" id="undoButton">Undo</button></li>
+								<li><button class="btn btn-info" id="redoButton">Redo</button></li>
+								<li><button class="btn btn-warning" id="clearButton">Clear</button></li>
+								<li><button class="btn btn-info" id="saveButton"><span aria-hidden="true" class="glyphicon-download"></span>Save</button></li>
+								<li><button class="btn btn-primary" id="loadButton"><span aria-hidden="true" class="glyphicon glyphicon-upload"></span>Load</button></li>					
+								<li>
+                                    <div aria-label="..." class="btn-group"role="group">
+                                        <button class="btn btn-default draw-tool active" id="penButton" type="button"><span aria-hidden="true"class="glyphicon glyphicon-pencil"></span></button>
+                                        <button class="btn btn-default draw-tool" id="circleShapeButton" type="button"><span aria-hidden="true"class="glyphicon glyphicon-adjust"></span></button>
+                                        <button class="btn btn-default draw-tool" id="squareShapeButton" type="button"><span aria-hidden="true"class="glyphicon glyphicon-stop"></span></button>
+                                        <button class="btn btn-default draw-tool" id="triangleShapeButton" type="button"><span aria-hidden="true"class="glyphicon glyphicon-triangle-top"></span></button>
+                                    </div>
+                                </li>
+								Colour:
+								<select name="colorPicker">
+                                  <option value="#7bd148">Green</option>
+                                  <option value="#5484ed">Bold blue</option>
+                                  <option value="#a4bdfc">Blue</option>
+                                  <option value="#46d6db">Turquoise</option>
+                                  <option value="#7ae7bf">Light green</option>
+                                  <option value="#51b749">Bold green</option>
+                                  <option value="#fbd75b">Yellow</option>
+                                  <option value="#ffb878">Orange</option>
+                                  <option value="#ff887c">Red</option>
+                                  <option value="#dc2127">Bold red</option>
+                                  <option value="#dbadff">Purple</option>
+                                  <option value="#e1e1e1">Gray</option>
+								</select>
+								Background:
+                                <select name="colorPickerBackground">
+                                  <option value="#7bd148">Green</option>
+                                  <option value="#5484ed">Bold blue</option>
+                                  <option value="#a4bdfc">Blue</option>
+                                  <option value="#46d6db">Turquoise</option>
+                                  <option value="#7ae7bf">Light green</option>
+                                  <option value="#51b749">Bold green</option>
+                                  <option value="#fbd75b">Yellow</option>
+                                  <option value="#ffb878">Orange</option>
+                                  <option value="#ff887c">Red</option>
+                                  <option value="#dc2127">Bold red</option>
+                                  <option value="#dbadff">Purple</option>
+                                  <option value="#e1e1e1">Gray</option>
+                                </select>
+                            </ul>
+                        </nav>
                     </div>
-                    </li>
-                </ul>
-              </nav>
+                </div>
+                <div class="inner cover">
+                    <div class="canvas-wrapper">
+                        <canvas class="drawing-canvas" height="975" id="mainCanvas" width="900"></canvas>
+                        <div class="code-wrapper">
+                            <pre>
+								<code>
+								function $initHighlight(block, cls) {
+								  try {
+									if (cls.search(/\bno\-highlight\b/) != -1)
+									  return process(block, true, 0x0F) +
+										` class="${cls}"`;
+								  } catch (e) {
+									  /* handle exception */
+								  }
+								  for (var i = 0 / 2; i &lt; classes.length; i++) {
+									if (checkCondition(classes[i]) === undefined)
+									  console.log('undefined');
+									}
+								  }
+									
+								  export  $initHighlight;
+
+								function $initHighlight(block, cls) {
+								  try {
+									if (cls.search(/\bno\-highlight\b/) != -1)
+									  return process(block, true, 0x0F) +
+										` class="${cls}"`;
+								  } catch (e) {
+									  /* handle exception */
+								  }
+								  for (var i = 0 / 2; i &lt; classes.length; i++) {
+									if (checkCondition(classes[i]) === undefined)
+									  console.log('undefined');
+									}
+								  }
+									
+								  export  $initHighlight;
+
+								function $initHighlight(block, cls) {
+								  try {
+									if (cls.search(/\bno\-highlight\b/) != -1)
+									  return process(block, true, 0x0F) +
+										` class="${cls}"`;
+								  } catch (e) {
+									  /* handle exception */
+								  }
+								  for (var i = 0 / 2; i &lt; classes.length; i++) {
+									if (checkCondition(classes[i]) === undefined)
+									  console.log('undefined');
+									}
+								  }
+									
+								  export  $initHighlight;
+								</code>
+							</pre>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-          <div class="inner cover">
-          <div class="canvas-wrapper">
-            <canvas class="drawing-canvas" id="mainCanvas" width="900" height="975"></canvas>
-              <div class="code-wrapper">
-                <pre>
-                  <code>
-                    function $initHighlight(block, cls) {
-                      try {
-                        if (cls.search(/\bno\-highlight\b/) != -1)
-                          return process(block, true, 0x0F) +
-                            ` class="${cls}"`;
-                      } catch (e) {
-                          /* handle exception */
-                      }
-                      for (var i = 0 / 2; i < classes.length; i++) {
-                        if (checkCondition(classes[i]) === undefined)
-                          console.log('undefined');
-                        }
-                      }
-                        
-                      export  $initHighlight;
-
-                    function $initHighlight(block, cls) {
-                      try {
-                        if (cls.search(/\bno\-highlight\b/) != -1)
-                          return process(block, true, 0x0F) +
-                            ` class="${cls}"`;
-                      } catch (e) {
-                          /* handle exception */
-                      }
-                      for (var i = 0 / 2; i < classes.length; i++) {
-                        if (checkCondition(classes[i]) === undefined)
-                          console.log('undefined');
-                        }
-                      }
-                        
-                      export  $initHighlight;
-
-                    function $initHighlight(block, cls) {
-                      try {
-                        if (cls.search(/\bno\-highlight\b/) != -1)
-                          return process(block, true, 0x0F) +
-                            ` class="${cls}"`;
-                      } catch (e) {
-                          /* handle exception */
-                      }
-                      for (var i = 0 / 2; i < classes.length; i++) {
-                        if (checkCondition(classes[i]) === undefined)
-                          console.log('undefined');
-                        }
-                      }
-                        
-                      export  $initHighlight;
-                  </code>
-                </pre>
-              </div>
-          </div>
-          </div>
-          </div>
         </div>
-
-      </div>
-
     </div>
-
-        <!--jQuery Script-->
-        <script src="./node_modules/jquery/dist/jquery.min.js"></script>
-        <!--Bootstrap Script-->
-        <script src="./node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
-        <!--Custom Scripts-->
-        
-        <script src="./js/drawing_pad.js"></script>
-        <script src="./js/script.js"></script>
-        <script src="./js/highlightScript.js"></script>
-        
-    </body>
+</body>
 </html>
