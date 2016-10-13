@@ -22,14 +22,15 @@ $(document).ready(function() {
     $("#downloadLink").hide();
 	
 	// simpleColorPicker functions
+	// https://github.com/tkrotoff/jquery-simplecolorpicker
 	$('select[name="colorPicker"]').on('change', function() {
 		drawingPad.setColour($('select[name="colorPicker"]').val());
 	});
 	$('select[name="colorPickerBackground"]').on('change', function() {
 		$(document.body).css('background-color', $('select[name="colorPickerBackground"]').val());
 	});
-	$('select[name="colorPicker"]').simplecolorpicker({picker: true, theme: 'glyphicons'});
-    $('select[name="colorPickerBackground"]').simplecolorpicker();
+	$('select[name="colorPicker"]').simplecolorpicker({picker: false, theme: 'fontawesome'});
+    $('select[name="colorPickerBackground"]').simplecolorpicker({picker: false, theme: 'fontawesome'});
 	
 	// button functions
     deselectButton.addEventListener("click", function() {

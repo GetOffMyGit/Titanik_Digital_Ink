@@ -85,3 +85,6 @@
 .simplecolorpicker span.vr {
   border-left: 1px solid #222; /* @gray-dark */
 }
+body.modal-open div.modal-backdrop { 
+    z-index: -1; 
+}
