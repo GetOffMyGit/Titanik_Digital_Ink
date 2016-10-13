@@ -37,6 +37,10 @@
     user-select: none;
 }
 
+<<<<<<< HEAD
+#signInButton {
+    visibility: hidden;
+=======
 #codeWrapper {
     visibility: hidden;
     width: 900px;
@@ -63,19 +67,5 @@
     top: 835px;
     position: absolute;
     z-index: 3;
-}
-
-
-#signInButton {
-    visibility: hidden;
-}
-
-input {
-    color: black;
-}
-
-body {
-    -webkit-touch-callout: none !important;
-    -webkit-user-select: none; 
-    -ms-user-select: none;
+>>>>>>> inputField
 }
