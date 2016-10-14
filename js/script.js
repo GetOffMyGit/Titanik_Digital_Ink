@@ -29,8 +29,8 @@ $(document).ready(function () {
 	$('select[name="colorPickerBackground"]').on('change', function() {
 		$(document.body).css('background-color', $('select[name="colorPickerBackground"]').val());
 	});
-	$('select[name="colorPicker"]').simplecolorpicker({picker: false, theme: 'fontawesome'});
-    $('select[name="colorPickerBackground"]').simplecolorpicker({picker: false, theme: 'fontawesome'});
+	$('select[name="colorPicker"]').simplecolorpicker({picker: true, theme: 'fontawesome'});
+    $('select[name="colorPickerBackground"]').simplecolorpicker({picker: true, theme: 'fontawesome'});
 	
 	// button functions
     deselectButton.addEventListener("click", function() {

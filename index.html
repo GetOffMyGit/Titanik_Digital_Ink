@@ -50,7 +50,6 @@
 	<script src="./js/highlightScript.js"></script>
 </head>
 
-
 <body>
 	<div class="site-wrapper">
 		<div class="site-wrapper-inner">
@@ -64,22 +63,50 @@
 									<div id="content">
 										<a id="downloadLink">Download</a>
 									</div>
-								</li>
-								<li class="active">
-									<a href="#">Home</a>
-								</li>
-								<li><button id="signInButton" class="btn btn-info">Sign In</button> </li>
-								<li><button id="pdfButton" class="btn btn-info">Generate PDF</button></li>								
+								</li>						
                                 <li><button class="btn btn-warning" id="deselectButton">Unselect All</button></li>
 								<li>
 									<button class="btn btn-info" id="undoButton">Undo</button>
 									<button class="btn btn-info" id="redoButton">Redo</button>
 									<button class="btn btn-danger" id="clearButton">Clear</button>
 								</li>
+								Colour:
+								<select name="colorPicker">
+									<option value="#323232">Black</option>
+									<option value="#7bd148">Green</option>
+									<option value="#5484ed">Bold blue</option>
+									<option value="#a4bdfc">Blue</option>
+									<option value="#46d6db">Turquoise</option>
+									<option value="#7ae7bf">Light green</option>
+									<option value="#51b749">Bold green</option>
+									<option value="#fbd75b">Yellow</option>
+									<option value="#ffb878">Orange</option>
+									<option value="#ff887c">Red</option>
+									<option value="#dc2127">Bold red</option>
+									<option value="#dbadff">Purple</option>
+									<option value="#e1e1e1">Gray</option>
+								</select>
+								Background:
+								<select name="colorPickerBackground">
+									<option value="#323232">Black</option>
+									<option value="#7bd148">Green</option>
+									<option value="#5484ed">Bold blue</option>
+									<option value="#a4bdfc">Blue</option>
+									<option value="#46d6db">Turquoise</option>
+									<option value="#7ae7bf">Light green</option>
+									<option value="#51b749">Bold green</option>
+									<option value="#fbd75b">Yellow</option>
+									<option value="#ffb878">Orange</option>
+									<option value="#ff887c">Red</option>
+									<option value="#dc2127">Bold red</option>
+									<option value="#dbadff">Purple</option>
+									<option value="#e1e1e1">Gray</option>
+                                </select>
 								<li>
 									<button class="btn btn-success" id="saveButton"><span aria-hidden="true" class="glyphicon glyphicon-download"></span> Save</button>
 									<button class="btn btn-primary" id="loadButton"><span aria-hidden="true" class="glyphicon glyphicon-upload"></span> Load</button>
-								</li>					
+									<button id="pdfButton" class="btn btn-warning">Generate PDF</button>
+								</li>
 								<li>
                                     <div aria-label="..." class="btn-group"role="group">
                                         <button class="btn btn-default draw-tool active" id="penButton" type="button"><span aria-hidden="true"class="glyphicon glyphicon-pencil"></span></button>
@@ -88,36 +115,7 @@
                                         <button class="btn btn-default draw-tool" id="triangleShapeButton" type="button"><span aria-hidden="true"class="glyphicon glyphicon-triangle-top"></span></button>
                                     </div>
 								</li>
-								Colour:
-								<select name="colorPicker">
-                                  <option value="#7bd148">Green</option>
-                                  <option value="#5484ed">Bold blue</option>
-                                  <option value="#a4bdfc">Blue</option>
-                                  <option value="#46d6db">Turquoise</option>
-                                  <option value="#7ae7bf">Light green</option>
-                                  <option value="#51b749">Bold green</option>
-                                  <option value="#fbd75b">Yellow</option>
-                                  <option value="#ffb878">Orange</option>
-                                  <option value="#ff887c">Red</option>
-                                  <option value="#dc2127">Bold red</option>
-                                  <option value="#dbadff">Purple</option>
-                                  <option value="#e1e1e1">Gray</option>
-								</select>
-								Background:
-								<select name="colorPickerBackground">
-                                  <option value="#7bd148">Green</option>
-                                  <option value="#5484ed">Bold blue</option>
-                                  <option value="#a4bdfc">Blue</option>
-                                  <option value="#46d6db">Turquoise</option>
-                                  <option value="#7ae7bf">Light green</option>
-                                  <option value="#51b749">Bold green</option>
-                                  <option value="#fbd75b">Yellow</option>
-                                  <option value="#ffb878">Orange</option>
-                                  <option value="#ff887c">Red</option>
-                                  <option value="#dc2127">Bold red</option>
-                                  <option value="#dbadff">Purple</option>
-                                  <option value="#e1e1e1">Gray</option>
-                                </select>
+								<li><button id="signInButton" class="btn btn-info">Sign In</button> </li>
 							</ul>
 						</nav>
 					</div>
