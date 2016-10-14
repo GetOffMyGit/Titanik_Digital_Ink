@@ -59,7 +59,7 @@
   display: inline-block;
 
   cursor: pointer;
-  border: 1px solid transparent;
+  border: 1px solid white;
 }
 
 .simplecolorpicker.icon:after,
