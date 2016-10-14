@@ -1,19 +1,40 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>Titanik Digital Ink</title>
+	<title>Titanik Digital Ink</title>
 	<!--Bootstrap CSS-->
-    <link href="./node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+	<link href="./node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" type="text/css">
 	<!--Custom CSS-->
-    <link href="./css/cover.css" rel="stylesheet" type="text/css">
-    <link href="./css/style.css" rel="stylesheet" type="text/css">
-    <!--Highlight JS-->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/default.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/highlight.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="./css/cover.css">
+	<link rel="stylesheet" type="text/css" href="./css/style.css">
+	<!-- Firebase -->
+	<script src="https://www.gstatic.com/firebasejs/3.4.1/firebase.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/3.4.0/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/3.4.0/firebase-auth.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/3.4.0/firebase-database.js"></script>
+	<script>
+          // Initialize Firebase
+          var config = {
+            apiKey: "AIzaSyCITDeEuIlyjmTHBZ93mLbCwCP2lfAlCeY",
+            authDomain: "titanik-e1f46.firebaseapp.com",
+            databaseURL: "https://titanik-e1f46.firebaseio.com",
+            storageBucket: "titanik-e1f46.appspot.com",
+            messagingSenderId: "991777282099"
+          };
+          firebase.initializeApp(config);
+        </script>
+	<!--Highlight JS-->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/default.min.css">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/highlight.min.js"></script>
 	<!--jQuery Script-->
-    <script src="./node_modules/jquery/dist/jquery.min.js"></script>
+	<script src="./node_modules/jquery/dist/jquery.min.js"></script>
 	<!--Bootstrap Script-->
 	<script src="./node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+	<!-- jsPDF -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.2/jspdf.min.js"></script>
+	<!--HTML2Canvas-->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
 	<!--SweetAlert-->
 	<link href="dist/sweetalert.css" rel="stylesheet" type="text/css">
 	<script src="dist/sweetalert.min.js"></script>
@@ -25,27 +46,30 @@
 	<script src="./js/simpleColorPicker.js"></script>
 	<!--Custom Scripts-->
 	<script src="./js/drawing_pad.js"></script>
-    <script src="./js/script.js"></script>
-    <script src="./js/highlightScript.js"></script>
+	<script src="./js/script.js"></script>
+	<script src="./js/highlightScript.js"></script>
 </head>
 
+
 <body>
-    <div class="site-wrapper">
-        <div class="site-wrapper-inner">
-            <div class="cover-container">
-                <div class="masthead clearfix">
-                    <div class="inner">
-                        <h3 class="masthead-brand">Cover</h3>
-                        <nav>
-                            <ul class="nav masthead-nav">
-                                <li>
-                                    <div id="content">
-                                        <a id="downloadLink">Download</a>
-                                    </div>
-                                </li>
-                                <li class="active">
-                                    <a href="#">Home</a>
-                                </li>
+	<div class="site-wrapper">
+		<div class="site-wrapper-inner">
+			<div class="cover-container">
+				<div class="masthead clearfix">
+					<div class="inner">
+						<h3 class="masthead-brand">Cover</h3>
+						<nav>
+							<ul class="nav masthead-nav">
+								<li>
+									<div id="content">
+										<a id="downloadLink">Download</a>
+									</div>
+								</li>
+								<li class="active">
+									<a href="#">Home</a>
+								</li>
+								<li><button id="signInButton" class="btn btn-info">Sign In</button> </li>
+								<li><button id="pdfButton" class="btn btn-info">Generate PDF</button></li>								
                                 <li><button class="btn btn-warning" id="deselectButton">Unselect All</button></li>
 								<li>
 									<button class="btn btn-info" id="undoButton">Undo</button>
@@ -63,116 +87,62 @@
                                         <button class="btn btn-default draw-tool" id="squareShapeButton" type="button"><span aria-hidden="true"class="glyphicon glyphicon-stop"></span></button>
                                         <button class="btn btn-default draw-tool" id="triangleShapeButton" type="button"><span aria-hidden="true"class="glyphicon glyphicon-triangle-top"></span></button>
                                     </div>
-                                </li>
-                                <a href="#myModal" class="btn btn-info" data-toggle="modal"><span aria-hidden="true"class="glyphicon glyphicon-pencil"></span> Colour</a>
-                                <div id="myModal" class="modal fade" tabindex="-1">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                                                <h4 class="modal-title">Colour Settings</h4>
-                                            </div>
-                                            <div class="modal-body" >
-                                                <h5>Pen / Shape:</h5>
-                                                <select name="colorPicker">
-                                                    <option value="#323232">Black</option>
-                                                    <option value="#7bd148">Green</option>
-                                                    <option value="#5484ed">Bold blue</option>
-                                                    <option value="#a4bdfc">Blue</option>
-                                                    <option value="#46d6db">Turquoise</option>
-                                                    <option value="#7ae7bf">Light green</option>
-                                                    <option value="#51b749">Bold green</option>
-                                                    <option value="#fbd75b">Yellow</option>
-                                                    <option value="#ffb878">Orange</option>
-                                                    <option value="#ff887c">Red</option>
-                                                    <option value="#dc2127">Bold red</option>
-                                                    <option value="#dbadff">Purple</option>
-                                                    <option value="#e1e1e1">Gray</option>
-                                                </select>
-                                                <h5>Tool Theme:</h5>
-                                                <select name="colorPickerBackground">
-                                                    <option value="#323232">Black</option>
-                                                    <option value="#7bd148">Green</option>
-                                                    <option value="#5484ed">Bold blue</option>
-                                                    <option value="#a4bdfc">Blue</option>
-                                                    <option value="#46d6db">Turquoise</option>
-                                                    <option value="#7ae7bf">Light green</option>
-                                                    <option value="#51b749">Bold green</option>
-                                                    <option value="#fbd75b">Yellow</option>
-                                                    <option value="#ffb878">Orange</option>
-                                                    <option value="#ff887c">Red</option>
-                                                    <option value="#dc2127">Bold red</option>
-                                                    <option value="#dbadff">Purple</option>
-                                                    <option value="#e1e1e1">Gray</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </ul>
-                        </nav>
-                    </div>
-                </div>
-                <div class="inner cover">
-                    <div class="canvas-wrapper">
-                        <canvas class="drawing-canvas" height="975" id="mainCanvas" width="900"></canvas>
-                        <div class="code-wrapper">
-                            <pre>
-			<code>
-			function $initHighlight(block, cls) {
-			  try {
-				if (cls.search(/\bno\-highlight\b/) != -1)
-				  return process(block, true, 0x0F) +
-					` class="${cls}"`;
-			  } catch (e) {
-				  /* handle exception */
-			  }
-			  for (var i = 0 / 2; i &lt; classes.length; i++) {
-				if (checkCondition(classes[i]) === undefined)
-				  console.log('undefined');
-				}
-			  }
-				
-			  export  $initHighlight;
-
-			function $initHighlight(block, cls) {
-			  try {
-				if (cls.search(/\bno\-highlight\b/) != -1)
-				  return process(block, true, 0x0F) +
-					` class="${cls}"`;
-			  } catch (e) {
-				  /* handle exception */
-			  }
-			  for (var i = 0 / 2; i &lt; classes.length; i++) {
-				if (checkCondition(classes[i]) === undefined)
-				  console.log('undefined');
-				}
-			  }
-				
-			  export  $initHighlight;
-
-			function $initHighlight(block, cls) {
-			  try {
-				if (cls.search(/\bno\-highlight\b/) != -1)
-				  return process(block, true, 0x0F) +
-					` class="${cls}"`;
-			  } catch (e) {
-				  /* handle exception */
-			  }
-			  for (var i = 0 / 2; i &lt; classes.length; i++) {
-				if (checkCondition(classes[i]) === undefined)
-				  console.log('undefined');
-				}
-			  }
-				
-			  export  $initHighlight;
-			</code>
+								</li>
+								Colour:
+								<select name="colorPicker">
+                                  <option value="#7bd148">Green</option>
+                                  <option value="#5484ed">Bold blue</option>
+                                  <option value="#a4bdfc">Blue</option>
+                                  <option value="#46d6db">Turquoise</option>
+                                  <option value="#7ae7bf">Light green</option>
+                                  <option value="#51b749">Bold green</option>
+                                  <option value="#fbd75b">Yellow</option>
+                                  <option value="#ffb878">Orange</option>
+                                  <option value="#ff887c">Red</option>
+                                  <option value="#dc2127">Bold red</option>
+                                  <option value="#dbadff">Purple</option>
+                                  <option value="#e1e1e1">Gray</option>
+								</select>
+								Background:
+								<select name="colorPickerBackground">
+                                  <option value="#7bd148">Green</option>
+                                  <option value="#5484ed">Bold blue</option>
+                                  <option value="#a4bdfc">Blue</option>
+                                  <option value="#46d6db">Turquoise</option>
+                                  <option value="#7ae7bf">Light green</option>
+                                  <option value="#51b749">Bold green</option>
+                                  <option value="#fbd75b">Yellow</option>
+                                  <option value="#ffb878">Orange</option>
+                                  <option value="#ff887c">Red</option>
+                                  <option value="#dc2127">Bold red</option>
+                                  <option value="#dbadff">Purple</option>
+                                  <option value="#e1e1e1">Gray</option>
+                                </select>
+							</ul>
+						</nav>
+					</div>
+				</div>
+				<div class="inner cover">
+					<button id="nextButton" class="btn btn-info">Next</button>
+					<div class="canvas-wrapper" id="canvasWrapper">
+						<canvas class="drawing-canvas" id="mainCanvas" width="900" height="975"></canvas>
+						<div class="code-wrapper">
+							<div>
+								<textarea type="text" id="inputField" /></textarea>
+							</div>
+							<pre>
+								<code id="codeBlock">
+								</code>
 							</pre>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src="./js/fireBaseScript.js"></script>
+	<script src="./js/inputScript.js"></script>
+	<script src="./js/pdfGenerationScript.js"></script>
 </body>
+
 </html>
