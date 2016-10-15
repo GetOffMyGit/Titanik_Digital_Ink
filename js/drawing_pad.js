@@ -590,6 +590,7 @@ var DrawingPad = (function (document) {
 	
     /**
      * Using touchevent from user, identifies the closest drawn shape and stores it as "selected"
+     * If the closest shape is already selected, the shape will instead be deselected.
      */
     DrawingPad.prototype.selectShape = function (event) {
         var rect = this._canvas.getBoundingClientRect();
@@ -607,34 +608,36 @@ var DrawingPad = (function (document) {
 		for(var i = 0; i < this.listOfShapes.length; i++) {
 			var shape = this.listOfShapes[i];
             if (shape.type != ShapeType.TRANSFORMRECORD) {
-                // if the current shape is not already selected
-                if (jQuery.inArray(shape, this.selectedShapes) == -1) {
-                    // if current shape is an ink line
-                    if (shape.type == ShapeType.INKLINE) {
-                        // go through each point of the ink line to determine if this line is closest to touch position
-                        for(var j = 0; j < shape.points.length; j++) {
-                            var point = shape.points[j];                
-                            currentDistance = point._distanceTo(touchCoords);
-                            if (currentDistance < smallestDistance && currentDistance <= this.distanceThreshold) {
-                                closestShape = shape;
-                                smallestDistance = currentDistance;
-                            }
-                        }
-                    } else {
-                        // check distance between touch position and centre of shape to determine if closest
-                        currentDistance = shape._distanceTo(touchCoords);
+                // if current shape is an ink line
+                if (shape.type == ShapeType.INKLINE) {
+                    // go through each point of the ink line to determine if this line is closest to touch position
+                    for(var j = 0; j < shape.points.length; j++) {
+                        var point = shape.points[j];                
+                        currentDistance = point._distanceTo(touchCoords);
                         if (currentDistance < smallestDistance && currentDistance <= this.distanceThreshold) {
                             closestShape = shape;
                             smallestDistance = currentDistance;
                         }
                     }
+                } else {
+                    // check distance between touch position and centre of shape to determine if closest
+                    currentDistance = shape._distanceTo(touchCoords);
+                    if (currentDistance < smallestDistance && currentDistance <= this.distanceThreshold) {
+                        closestShape = shape;
+                        smallestDistance = currentDistance;
+                    }
                 }
             }
 		}
 
-        // store line as a selected line
+        // store shape as a selected shape if it is not already selected
         if (closestShape != null) {
-            this.selectedShapes.push(closestShape);
+            if (jQuery.inArray(closestShape, this.selectedShapes) == -1) {
+                this.selectedShapes.push(closestShape);
+            } else {
+                // otherwise if the shape is already selected, deselect it.
+                this.deselectSingleShape(closestShape);
+            }
         }
 	};
 
@@ -679,6 +682,24 @@ var DrawingPad = (function (document) {
 
         // selectedShapes array can now be safely set to empty
         this.selectedShapes = [];
+
+        // clear canvas and redraw all shapes
+        this.clear();
+        this.drawShapes();
+    }
+
+    /**
+     * Deselects the specified shape
+     */
+    DrawingPad.prototype.deselectSingleShape = function (shapeToDeselect) {
+        // Change colour specified shape back to its original colour
+        // This will change the same shape within this.listOfShapes as it held by reference.
+        var i = this.selectedShapes.indexOf(shapeToDeselect);
+        var shape = this.selectedShapes[i];
+        shape.colour = shape.originalColour; 
+
+        // remove the specified shape from selectedShapes
+        this.selectedShapes.splice(i, 1);
 
         // clear canvas and redraw all shapes
         this.clear();
