@@ -14,6 +14,9 @@ $(document).ready(function() {
     });
 
     $('#backButton').click(function() {
+        var codeText = $('#codeBlock').text();
+        $('#inputField').val(codeText);
+
         $('#inputField').css('visibility', 'visible');
         $('#codeBlock').css('visibility', 'hidden');
         $('#mainCanvas').css('visibility', 'hidden');
