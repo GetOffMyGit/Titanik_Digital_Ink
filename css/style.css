@@ -71,6 +71,10 @@
     visibility: hidden;
 }
 
+#codeBlock {
+    min-height: 550px;
+}
+
 input {
     color: black;
 }
