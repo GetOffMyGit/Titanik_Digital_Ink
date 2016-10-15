@@ -9,5 +9,16 @@ $(document).ready(function() {
         $('pre code').each(function(i, block) {
             hljs.highlightBlock(block);
         });
+        $('#nextButton').css('visibility', 'hidden');
+        $('#backButton').css('visibility', 'visible');
+    });
+
+    $('#backButton').click(function() {
+        $('#inputField').css('visibility', 'visible');
+        $('#codeBlock').css('visibility', 'hidden');
+        $('#mainCanvas').css('visibility', 'hidden');
+
+        $('#nextButton').css('visibility', 'visible');
+        $('#backButton').css('visibility', 'hidden');
     });
 });

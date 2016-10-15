@@ -61,9 +61,17 @@
 
 #nextButton {
     left: 850px;
-    top: 600px;
+    top: 615px;
     position: absolute;
     z-index: 3;
+}
+
+#backButton {
+    left: 775px;
+    top: 615px;
+    position: absolute;
+    z-index: 3;
+    visibility: hidden;
 }
 
 
