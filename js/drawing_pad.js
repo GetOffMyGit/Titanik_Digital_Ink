@@ -50,7 +50,7 @@ var DrawingPad = (function (document) {
         this.minWidth = opts.minWidth || 0.5;
         this.maxWidth = opts.maxWidth || 2.5;
         this.dotSize = opts.dotSize || function () {
-            return (this.minWidth + this.maxWidth) / 2;
+			return (this.minWidth + this.maxWidth) / 2;
         };
         this.penColor = opts.penColor || "black";
         this.selectedColor = "yellow";
@@ -63,7 +63,7 @@ var DrawingPad = (function (document) {
 		this.undoStack = [];
         this.listOfShapes = [];
         this.drawMode = drawModes.PEN;
-		this.colourSelect = '#7bd148';
+		this.colourSelect = '#323232';
         // holds the lines currently selected by the user
         this.selectedShapes = [];
         // used to determine if double tap or single tap

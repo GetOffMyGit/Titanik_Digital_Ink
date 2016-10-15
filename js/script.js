@@ -20,19 +20,20 @@ $(document).ready(function () {
     var triangleShapeButton = $("#triangleShapeButton")[0];
 
     $("#downloadLink").hide();
-
-    // simpleColorPicker functions
-    $('select[name="colorPicker"]').on('change', function () {
-        drawingPad.setColour($('select[name="colorPicker"]').val());
-    });
-    $('select[name="colorPickerBackground"]').on('change', function () {
-        $(document.body).css('background-color', $('select[name="colorPickerBackground"]').val());
-    });
-    $('select[name="colorPicker"]').simplecolorpicker({ picker: true, theme: 'glyphicons' });
-    $('select[name="colorPickerBackground"]').simplecolorpicker();
-
-    // button functions
-    deselectButton.addEventListener("click", function () {
+	
+	// simpleColorPicker functions
+	// https://github.com/tkrotoff/jquery-simplecolorpicker
+	$('select[name="colorPicker"]').on('change', function() {
+		drawingPad.setColour($('select[name="colorPicker"]').val());
+	});
+	$('select[name="colorPickerBackground"]').on('change', function() {
+		$(document.body).css('background-color', $('select[name="colorPickerBackground"]').val());
+	});
+	$('select[name="colorPicker"]').simplecolorpicker({picker: true, theme: 'fontawesome'});
+    $('select[name="colorPickerBackground"]').simplecolorpicker({picker: true, theme: 'fontawesome'});
+	
+	// button functions
+    deselectButton.addEventListener("click", function() {
         drawingPad.deselectShapes();
     });
     undoButton.addEventListener("click", function () {

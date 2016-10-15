@@ -3,15 +3,16 @@
  */
  
  .drawing-canvas {
-   background-color: transparent;   
+   background-color: transparent;
  }
+ 
  .canvas-wrapper {
+  z-index: 0;
   width: 100%;
-  height: 800px;
+  height: 550px;
   overflow-y: scroll;
   padding-top: 10px;
   position: relative;
-  top: 60px
 }
 
 #mainCanvas {
@@ -60,7 +61,7 @@
 
 #nextButton {
     left: 850px;
-    top: 835px;
+    top: 600px;
     position: absolute;
     z-index: 3;
 }
