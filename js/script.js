@@ -20,20 +20,20 @@ $(document).ready(function () {
     var triangleShapeButton = $("#triangleShapeButton")[0];
 
     $("#downloadLink").hide();
-	
-	// simpleColorPicker functions
-	// https://github.com/tkrotoff/jquery-simplecolorpicker
-	$('select[name="colorPicker"]').on('change', function() {
-		drawingPad.setColour($('select[name="colorPicker"]').val());
-	});
-	$('select[name="colorPickerBackground"]').on('change', function() {
-		$(document.body).css('background-color', $('select[name="colorPickerBackground"]').val());
-	});
-	$('select[name="colorPicker"]').simplecolorpicker({picker: true, theme: 'fontawesome'});
-    $('select[name="colorPickerBackground"]').simplecolorpicker({picker: true, theme: 'fontawesome'});
-	
-	// button functions
-    deselectButton.addEventListener("click", function() {
+
+    // simpleColorPicker functions
+    // https://github.com/tkrotoff/jquery-simplecolorpicker
+    $('select[name="colorPicker"]').on('change', function () {
+        drawingPad.setColour($('select[name="colorPicker"]').val());
+    });
+    $('select[name="colorPickerBackground"]').on('change', function () {
+        $(document.body).css('background-color', $('select[name="colorPickerBackground"]').val());
+    });
+    $('select[name="colorPicker"]').simplecolorpicker({ picker: true, theme: 'fontawesome' });
+    $('select[name="colorPickerBackground"]').simplecolorpicker({ picker: true, theme: 'fontawesome' });
+
+    // button functions
+    deselectButton.addEventListener("click", function () {
         drawingPad.deselectShapes();
     });
     undoButton.addEventListener("click", function () {
@@ -90,11 +90,13 @@ $(document).ready(function () {
                         return false;
                     }
                     var codeString = $('#codeBlock').text();
+                    var projectKey = firebase.database().ref('/users/' + firebase.auth().currentUser.uid + '/' + projectName).push().key;
                     firebase.database().ref('/users/' + firebase.auth().currentUser.uid + '/' + projectName).update({
                         code: codeString,
-                        drawing: json
+                        drawing: json,
+                        projectKey: projectKey
                     }).then(function () {
-                        swal("Project " + projectName + " successfully saved.");
+                        swal("Project " + projectName + " Saved.", "Project Key: " + projectKey, "success");
                     });
                 });
         }
@@ -115,27 +117,49 @@ $(document).ready(function () {
                 snapshot.forEach(function (childSnapshot) {
                     projectButtonsHTML += "<button class='projectButton'>" + childSnapshot.key + "</button>";
                 });
+                projectButtonsHTML += "<button id='loadFromKeyButton>Load from Key</button>";
             }).then(function () {
                 swal({
                     title: "Please select the project to load",
                     text: projectButtonsHTML,
-                    html: true
+                    html: true,
+                    confirmButtonText: "Load from project key",
+                    closeOnConfirm: false
+                }, function () {
+                    swal({
+                        title: "Load From Project Key",
+                        text: "Project Key",
+                        type: "input"
+                    },
+                        function (projectKey) {
+                            if (projectKey === false) {
+                                return false;
+                            }
+                            if (projectKey === "") {
+                                swal.showInputError("Pleas input a project key.");
+                                return false;
+                            }
+                            firebase.database().ref("/users").once('value', function (snapshot) {
+                                snapshot.forEach(function (userSnapshot) {
+                                    firebase.database().ref('/users/' + userSnapshot.key).orderByChild('projectKey').equalTo(projectKey).once('value', function (snapshot) {
+                                        snapshot.forEach(function (projectSnap) {
+                                            $('#codeBlock').text(projectSnap.val().code);
+                                            var drawingJson = JSON.parse(projectSnap.val().drawing);
+                                            $('pre code').each(function (i, block) {
+                                                hljs.highlightBlock(block);
+                                            });
+                                            for (var i = 0; i < drawingJson.length; i++) {
+                                                drawingPad.drawFromJson(drawingJson[i]);
+                                            }
+                                        });
+                                    });
+                                });
+                            });
+                        });
                 });
             });
         }
         drawingPad.on();
-        // $.getJSON("inks.json", function(json) {
-        //     // iterate through all the lines
-        //     for(var i = 0; i < json.length; i++) {
-        //         var line = json[i];
-
-        //         // draw the line given by points
-        //         drawingPad.drawFromJson(line);
-        //     }
-
-        //     // allow ink after input done
-        //     drawingPad.on();
-        // });
     });
 
     // keeps one draw tool always "active"
@@ -170,5 +194,9 @@ $(document).ready(function () {
                 }
             });
         }
+    });
+
+    $(document).on('click', '#loadFromKeyButton', function () {
+        alert("WOOHOO");
     });
 });
