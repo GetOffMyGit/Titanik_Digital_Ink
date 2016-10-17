@@ -120,6 +120,7 @@ $(document).ready(function () {
                     text: projectButtonsHTML,
                     html: true,
                     confirmButtonText: "Load from project key",
+					showCancelButton: true,
                     closeOnConfirm: false
                 }, function () {
                     swal({
