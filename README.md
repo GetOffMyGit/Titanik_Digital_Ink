@@ -1,5 +1,6 @@
 # Titanik_Digital_Ink
-Using Digital Ink to Teach Programming 
+Using Digital Ink to Teach Programming
+
 [Live Website From Master Branch](http://titanik.azurewebsites.net/)
 
 ### Setup
