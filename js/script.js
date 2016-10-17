@@ -1,9 +1,9 @@
 $(document).ready(function () {
     var mainCanvas = document.querySelector("#mainCanvas");
     var drawingPad = new DrawingPad(mainCanvas, {
-        dotSize: 1,
-        minWidth: 1,
-        maxWidth: 1,
+        dotSize: 1.2,
+        minWidth: 1.2,
+        maxWidth: 1.2,
         penColor: "rgb(66, 133, 244)"
     });
 
@@ -100,10 +100,6 @@ $(document).ready(function () {
                     });
                 });
         }
-        $("#downloadLink").show();
-        downloadRef.download = "inks.json";
-        downloadRef.href = url;
-        downloadRef.textContent = "Download inks.json";
     });
     loadButton.addEventListener("click", function () {
         //TODO: load from external chosen file

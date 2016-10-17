@@ -10,6 +10,9 @@ $(document).ready(function() {
             hljs.highlightBlock(block);
         });
         $('#nextButton').css('visibility', 'hidden');
+        $('#spanUp').css('visibility', 'visible');
+        $('#spanDown').css('visibility', 'visible');
+
         $('#backButton').css('visibility', 'visible');
     });
 
@@ -22,6 +25,11 @@ $(document).ready(function() {
         $('#mainCanvas').css('visibility', 'hidden');
 
         $('#nextButton').css('visibility', 'visible');
+        $('#spanUp').css('visibility', 'hidden');
+        $('#spanDown').css('visibility', 'hidden');
+
         $('#backButton').css('visibility', 'hidden');
     });
+
+    
 });

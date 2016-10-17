@@ -8,11 +8,12 @@
  
  .canvas-wrapper {
   z-index: 0;
-  width: 100%;
-  height: 550px;
+  width: 900px;
+  height: 500px;
   overflow-y: scroll;
   padding-top: 10px;
   position: relative;
+  top: 30px;
 }
 
 #mainCanvas {
@@ -36,11 +37,16 @@
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+    font-size: 1.3em;
+}
+
+#codeBlock {
+    font-size: 1.3em;
 }
 
 #codeWrapper {
     visibility: hidden;
-    width: 900px;
+    width: 800px;
     height: 975px;
 }
 
@@ -60,19 +66,47 @@
 }
 
 #nextButton {
-    left: 850px;
-    top: 615px;
+    left: 800px;
+    top: 540px;
     position: absolute;
     z-index: 3;
 }
 
 #backButton {
-    left: 775px;
-    top: 615px;
+    left: 800px;
+    top: 540px;
     position: absolute;
     z-index: 3;
     visibility: hidden;
 }
+
+#spanUp {
+    left: 893px;
+    top: 100px;
+    position: absolute;
+    z-index: 3;
+    color: hotpink;
+    visibility: hidden;
+
+}
+
+#spanDown {
+    left: 893px;
+    top: 555px;
+    position: absolute;
+    z-index: 3;
+    color: hotpink;
+    visibility: hidden;
+
+}
+
+.glyphicon-chevron-up{
+    font-size: 30px;
+}
+
+ .glyphicon-chevron-down {
+     font-size: 30px;
+ }
 
 
 #signInButton {
@@ -80,7 +114,7 @@
 }
 
 #codeBlock {
-    min-height: 550px;
+    min-height: 500px;
 }
 
 input {

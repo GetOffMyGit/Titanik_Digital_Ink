@@ -135,7 +135,7 @@ var DrawingPad = (function (document) {
                             context.touchTimer = null;                            
                             // handle depending on selected mode
                             self._startShapeOrLine(touch);
-                        }, 500)
+                        }, 350)
                     // otherwise it is a double tap
                     } else {                
                         // get line selected by user and highlight it
@@ -844,7 +844,7 @@ var DrawingPad = (function (document) {
         // loop through selected list and increase size
         for (var i = 0; i < this.selectedShapes.length; i++) {
             var shape = this.selectedShapes[i];
-            var value = 10;
+            var value = 3;
             var min = 20;
             var maxH = this._canvas.height * 0.8;
             var maxW = this._canvas.width * 0.8;
@@ -1206,7 +1206,7 @@ var DrawingPad = (function (document) {
     {
         var shape = this.listOfShapes[this.listOfShapes.length -1];
         // from resizeSelectedShapes function
-        var value = 10;
+        var value = 3;
         var min = 20;
         var maxH = this._canvas.height * 0.8;
         var maxW = this._canvas.width * 0.8;

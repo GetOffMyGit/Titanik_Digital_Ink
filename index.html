@@ -58,12 +58,7 @@
 					<div class="inner">
 						<h3 class="masthead-brand">CodeDraw</h3>
 						<nav>
-							<ul class="nav masthead-nav">
-								<li>
-									<div id="content">
-										<a id="downloadLink">Download</a>
-									</div>
-								</li>						
+							<ul class="nav masthead-nav">				
                                 <li><button class="btn btn-warning" id="deselectButton">Unselect All</button></li>
 								<li>
 									<button class="btn btn-info" id="undoButton"><span aria-hidden="true" class="glyphicon glyphicon-chevron-left"></span></button>
@@ -123,8 +118,11 @@
 				<div class="inner cover">
 					<button id="nextButton" class="btn btn-info">Next</button>
 					<button id="backButton" class="btn btn-info">Back</button>
+					<span id="spanUp" class="glyphicon glyphicon glyphicon-chevron-up" aria-hidden="true"></span>
+					<span id="spanDown" class="glyphicon glyphicon glyphicon-chevron-down" aria-hidden="true"></span>
+
 					<div class="canvas-wrapper" id="canvasWrapper">
-						<canvas class="drawing-canvas" id="mainCanvas" width="900" height="975"></canvas>
+						<canvas class="drawing-canvas" id="mainCanvas" width="850" height="975"></canvas>
 						<div class="code-wrapper">
 							<div>
 								<textarea type="text" id="inputField" /></textarea>
