@@ -53,7 +53,7 @@ var DrawingPad = (function (document) {
 			return (this.minWidth + this.maxWidth) / 2;
         };
         this.penColor = opts.penColor || "black";
-        this.selectedColor = "yellow";
+        this.selectedColor = 'rgba(255,255,0,0.7)';
         this.backgroundColor = opts.backgroundColor || "rgba(0,0,0,0)";
         // how close the user must touch to a line to actually select it
         this.distanceThreshold = 20;  
@@ -63,7 +63,7 @@ var DrawingPad = (function (document) {
 		this.undoStack = [];
         this.listOfShapes = [];
         this.drawMode = drawModes.PEN;
-		this.colourSelect = '#323232';
+		this.colourSelect = 'rgba(50,50,50,0.7)';
         // holds the lines currently selected by the user
         this.selectedShapes = [];
         // used to determine if double tap or single tap
@@ -1258,8 +1258,19 @@ var DrawingPad = (function (document) {
     };
 	
 	DrawingPad.prototype.setColour = function(colourHex) {
-		 this.colourSelect = colourHex;
+		var rgbColour = hexToRgb(colourHex);
+		var colour = 'rgba(' + rgbColour.r + ', ' + rgbColour.g + ', ' + rgbColour.b + ', 0.7)';
+		this.colourSelect = colour;
 	};
+	
+	function hexToRgb(hex) {
+		var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+		return result ? {
+			r: parseInt(result[1], 16),
+			g: parseInt(result[2], 16),
+			b: parseInt(result[3], 16)
+		} : null;
+	}
 	
 
     return DrawingPad;
