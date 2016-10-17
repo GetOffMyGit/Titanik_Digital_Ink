@@ -43,7 +43,6 @@ $(document).ready(function () {
     redoButton.addEventListener("click", function () {
         drawingPad.redo();
     });
-
     clearButton.addEventListener("click", function () {
         swal({
             title: "Are you sure?",
@@ -61,7 +60,6 @@ $(document).ready(function () {
                 "success");
         });
     });
-
     saveButton.addEventListener("click", function () {
         var inkLines = drawingPad.getListOfShapes();
         var json = JSON.stringify(inkLines);
@@ -191,9 +189,5 @@ $(document).ready(function () {
                 }
             });
         }
-    });
-
-    $(document).on('click', '#loadFromKeyButton', function () {
-        alert("WOOHOO");
     });
 });
