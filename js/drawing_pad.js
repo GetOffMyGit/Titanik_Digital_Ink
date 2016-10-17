@@ -776,7 +776,7 @@ var DrawingPad = (function (document) {
         var shapeType = jsonShape.type;
 
         if (shapeType == ShapeType.INKLINE) {
-            shape = new InkLine('green');
+            shape = new InkLine(jsonShape.colour);
             // iterate through each point
             for(var i = 0; i < jsonShape.points.length; i++) {
                     var jsonPoint = jsonShape.points[i];
