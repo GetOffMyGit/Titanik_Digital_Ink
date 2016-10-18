@@ -118,7 +118,7 @@ $(document).ready(function () {
                     text: projectButtonsHTML,
                     html: true,
                     confirmButtonText: "Load from project key",
-					showCancelButton: true,
+                    showCancelButton: true,
                     closeOnConfirm: false
                 }, function () {
                     swal({
@@ -134,6 +134,17 @@ $(document).ready(function () {
                                 swal.showInputError("Pleas input a project key.");
                                 return false;
                             }
+
+                            $('#inputField').css('visibility', 'hidden');
+                            $('#codeBlock').css('visibility', 'visible');
+                            $('#mainCanvas').css('visibility', 'visible');
+                            $('#nextButton').css('visibility', 'hidden');
+                            $('#spanUp').css('visibility', 'visible');
+                            $('#spanDown').css('visibility', 'visible');
+                            $('#backButton').css('visibility', 'visible');
+
+                            drawingPad.clear();
+                            drawingPad.clearStack();
                             firebase.database().ref("/users").once('value', function (snapshot) {
                                 snapshot.forEach(function (userSnapshot) {
                                     firebase.database().ref('/users/' + userSnapshot.key).orderByChild('projectKey').equalTo(projectKey).once('value', function (snapshot) {
@@ -178,6 +189,17 @@ $(document).ready(function () {
     $(document).on('click', '.projectButton', function () {
         var projectName = this.textContent;
         if (projectName != null) {
+
+            $('#inputField').css('visibility', 'hidden');
+            $('#codeBlock').css('visibility', 'visible');
+            $('#mainCanvas').css('visibility', 'visible');
+            $('#nextButton').css('visibility', 'hidden');
+            $('#spanUp').css('visibility', 'visible');
+            $('#spanDown').css('visibility', 'visible');
+            $('#backButton').css('visibility', 'visible');
+
+            drawingPad.clear();
+            drawingPad.clearStack();
             firebase.database().ref('/users/' + firebase.auth().currentUser.uid + '/' + projectName).once('value').then(function (snapshot) {
                 $('#codeBlock').text(snapshot.val().code);
                 var drawingJson = JSON.parse(snapshot.val().drawing);
